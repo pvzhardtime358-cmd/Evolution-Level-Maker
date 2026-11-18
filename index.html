@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evolution Level Editor</title>
+<meta name="theme-color" content="#05060f">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-main:#05060f; --bg-card:rgba(10,14,32,.94); --bg-input:rgba(255,255,255,.045);
+    --primary:#2f8cff; --primary-hover:#1b57d6; --danger:#ff2d55; --danger-hover:#c3153a;
+    --text-main:#e9eefc; --text-muted:#9aa7c7; --border-color:rgba(255,255,255,.1);
+    --accent-glow:rgba(47,140,255,.4);
+    --blue:#2f8cff; --cyan:#29d4ff; --red:#ff2d55; --orange:#ff6a3d;
+    --grad:linear-gradient(135deg,var(--blue),var(--red));
+    --head:'Outfit','Inter',system-ui,sans-serif;
+    --pf-color:#50c878; --jam-color:#ff00ff; --plank-color:#ff8a3d; --tide-color:#29d4ff;
+    --frozen-color:#00e5ff; --endangered-color:#ffc107; --ls-color:#ffd700;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0; min-height:100vh; overflow-x:hidden; color:var(--text-main); line-height:1.6;
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    background-color:var(--bg-main);
+    }
+  body::before { content:''; position:fixed; inset:0; z-index:-1; pointer-events:none; transform:translateZ(0);
+    background:linear-gradient(180deg,rgba(5,6,15,.55),rgba(5,6,15,.82)),
+      radial-gradient(900px 500px at 8% -5%,rgba(47,140,255,.28),transparent 60%),
+      radial-gradient(900px 600px at 100% 100%,rgba(255,45,85,.24),transparent 60%),
+      url('evolution-space.png') center/cover no-repeat; }
+  .orb { position:fixed; z-index:-1; border-radius:50%; pointer-events:none; }
+  .o1 { width:520px; height:520px; top:8%; left:-200px; background:radial-gradient(circle,rgba(47,140,255,.28),transparent 68%); }
+  .o2 { width:560px; height:560px; bottom:-220px; right:-220px; background:radial-gradient(circle,rgba(255,45,85,.26),transparent 68%); }
+
+  /* NAV */
+  nav { position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; padding:18px 48px; background:rgba(5,6,15,.96); border-bottom:1px solid rgba(255,255,255,.08); }
+  nav::after { content:''; position:absolute; left:0; right:0; bottom:-1px; height:2px; background:linear-gradient(90deg,var(--blue),var(--red),var(--blue)); background-size:200% auto; opacity:.85; }
+  nav h1 { margin:0; font:900 28px var(--head); letter-spacing:4px; text-transform:uppercase; background:linear-gradient(90deg,var(--blue),var(--red),var(--blue)); background-size:200% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .menu { display:flex; gap:6px; }
+  .menu a { color:var(--muted,#9aa7c7); text-decoration:none; font:600 14px var(--head); letter-spacing:1.2px; text-transform:uppercase; padding:10px 16px; border-radius:10px; transition:color .25s,background .25s; }
+  .menu a:hover { color:#fff; background:rgba(47,140,255,.14); }
+
+  /* HERO + LAYOUT */
+  .hero { text-align:center; padding:64px 24px 36px; }
+  .hero h2 { margin:0 0 14px; padding:0; border:0; font:900 clamp(34px,6vw,58px)/1.05 var(--head); letter-spacing:3px; text-transform:uppercase; color:#fff; text-shadow:0 0 30px rgba(47,140,255,.45),0 8px 30px rgba(255,45,85,.3); }
+  .hero p { max-width:620px; margin:0 auto; font-size:19px; line-height:1.7; color:#c9d4f2; }
+  .wrap { width:100%; max-width:900px; margin:0 auto; padding:0 24px 20px; }
+
+  /* CARDS */
+  .card { position:relative; padding:36px 40px; margin-bottom:28px; border-radius:26px; background:var(--bg-card); border:1px solid rgba(255,255,255,.07); box-shadow:0 8px 24px rgba(0,0,0,.4); }
+  .card::before { content:''; position:absolute; top:0; left:40px; right:40px; height:3px; border-radius:0 0 6px 6px; background:linear-gradient(90deg,var(--blue),var(--red),var(--blue)); background-size:200% auto; }
+  .card[style*="border-color"]::before { display:none; }
+  h2 { margin:0 0 20px; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,.1); font:900 clamp(22px,3.4vw,30px) var(--head); letter-spacing:1.5px; text-transform:uppercase; }
+  .card h2 { background:linear-gradient(90deg,var(--blue),var(--red),var(--blue)); background-size:200% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .card h2[style*="color"] { background:none; animation:none; -webkit-text-fill-color:currentColor; }
+  .card p { color:#c9d4f2; }
+
+  /* INPUTS */
+  input[type="text"],input[type="number"],select,textarea,button { width:100%; padding:13px 14px; margin-top:8px; color:var(--text-main); background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; font:500 14px 'Inter',system-ui,sans-serif; transition:border-color .25s,box-shadow .25s,background .25s,transform .3s; }
+  input::placeholder,textarea::placeholder { color:#6d7a9c; }
+  option { background:#0a0e20; color:#e9eefc; }
+  input:focus,select:focus,textarea:focus { outline:none; border-color:var(--cyan); box-shadow:0 0 0 3px rgba(41,212,255,.18),0 0 18px var(--accent-glow); }
+  input[type="checkbox"] { accent-color:var(--blue); width:16px; height:16px; margin:0; }
+  textarea { height:300px; font-family:'Courier New',Courier,monospace; }
+
+  /* BUTTONS */
+  button { position:relative; overflow:hidden; cursor:pointer; border:1px solid rgba(255,255,255,.18); color:#fff; background:linear-gradient(135deg,#1b57d6,var(--blue) 55%,var(--cyan)); box-shadow:0 8px 24px rgba(47,140,255,.35); font:800 14px var(--head); letter-spacing:2px; text-transform:uppercase; padding:14px 20px; }
+  button::before { content:''; position:absolute; top:0; left:-120%; width:60%; height:100%; background:linear-gradient(90deg,transparent,rgba(255,255,255,.35),transparent); transform:skewX(-25deg); transition:left .6s; pointer-events:none; }
+  button:hover::before { left:140%; }
+  button:hover { transform:translateY(-3px); box-shadow:0 14px 34px rgba(47,140,255,.55); }
+  button:active { transform:scale(.97); }
+  button:focus-visible,.menu a:focus-visible { outline:3px solid var(--cyan); outline-offset:3px; }
+  .red,.deleteBtn,.export-btn { background:linear-gradient(135deg,#c3153a,var(--red) 55%,var(--orange)); box-shadow:0 8px 24px rgba(255,45,85,.4); }
+  .red:hover,.deleteBtn:hover,.export-btn:hover { box-shadow:0 14px 34px rgba(255,45,85,.6); }
+  .smallBtn { width:auto; padding:10px 18px; margin:0; }
+  .secondary-btn { width:auto; margin-top:12px; padding:10px 18px; background:transparent; box-shadow:none; color:var(--text-muted); border:1px solid var(--border-color); }
+  .secondary-btn:hover { background:rgba(255,255,255,.06); color:#fff; border-color:rgba(255,255,255,.4); box-shadow:none; }
+  .tab-group { display:flex; gap:10px; margin-bottom:15px; }
+  .tab-btn { flex:1; background:var(--bg-input); box-shadow:none; color:var(--text-muted); border:1px solid var(--border-color); }
+  .tab-btn:hover { box-shadow:none; background:rgba(47,140,255,.14); }
+  .tab-btn.active { color:#fff; background:linear-gradient(135deg,rgba(47,140,255,.45),rgba(255,45,85,.45)); border-color:rgba(255,255,255,.25); }
+
+  /* SELECTORS & GRIDS */
+  .image-selector-box { position:relative; width:100%; max-width:260px; height:124px; margin-top:15px; padding:10px; display:flex; align-items:center; justify-content:center; text-align:center; overflow:hidden; cursor:pointer; background:var(--bg-input); border:2px dashed rgba(255,255,255,.18); border-radius:16px; transition:border-color .2s,background-color .2s; }
+  .image-selector-box:hover { border-color:var(--cyan); box-shadow:0 0 20px var(--accent-glow); }
+  .image-selector-text { position:absolute; z-index:1; pointer-events:none; color:var(--text-muted); font:600 14px var(--head); letter-spacing:1px; }
+  .image-selector-box img { position:relative; z-index:2; width:100%; height:100%; object-fit:contain; background:transparent; transition:opacity .2s; }
+  .checkbox-group { display:flex; flex-wrap:wrap; gap:12px; margin-top:15px; }
+  .checkbox-label { display:flex; align-items:center; gap:10px; padding:10px 16px; cursor:pointer; background:var(--bg-input); border:1px solid var(--border-color); border-radius:12px; transition:border-color .2s,background-color .2s; }
+  .checkbox-label:hover { border-color:var(--blue); background:rgba(47,140,255,.1); }
+  #plantGrid,#zombieGrid,#stageGrid,#mowerGrid,#defeatTypeGrid,#tilePlantGrid,#tileZombieGrid,#tileGridItemGrid,#tileMoonsoilGrid { display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr)); gap:14px; margin-top:15px; max-height:400px; overflow-y:auto; padding:12px; background:rgba(0,0,0,.3); border:1px solid var(--border-color); border-radius:16px; }
+  #stageGrid { grid-template-columns:repeat(auto-fill,minmax(120px,1fr)); }
+  .grid-item { position:relative; display:flex; justify-content:center; align-items:center; padding:10px; cursor:pointer; background:rgba(255,255,255,.04); border:2px solid transparent; border-radius:14px; transition:border-color .2s,background-color .2s; }
+  .grid-item:hover { transform:translateY(-3px); background:rgba(47,140,255,.12); border-color:rgba(255,255,255,.2); }
+  .grid-item.selected { border-color:var(--cyan); background:rgba(41,212,255,.14); box-shadow:0 0 0 1px var(--cyan),0 8px 24px rgba(41,212,255,.3); }
+  .grid-item img { width:60px; height:60px; object-fit:contain; }
+  #stageGrid .grid-item img { width:100px; height:60px; }
+  .izb-sun-warning { position:absolute; bottom:-5px; right:-5px; padding:2px 4px; border-radius:4px; background:var(--endangered-color); color:#000; font-size:10px; font-weight:bold; pointer-events:none; box-shadow:0 2px 5px rgba(0,0,0,.5); }
+
+  /* LAWN */
+  .lawn-grid { display:grid; grid-template-columns:repeat(9,1fr); grid-template-rows:repeat(5,1fr); gap:5px; margin-top:20px; padding:12px; overflow-x:auto; background:rgba(0,0,0,.4); border:1px solid var(--border-color); border-radius:18px; }
+  .lawn-cell { position:relative; min-width:40px; aspect-ratio:1/1; display:flex; justify-content:center; align-items:center; cursor:pointer; background:rgba(255,255,255,.05); border-radius:8px; transition:background .2s,box-shadow .2s; }
+  .lawn-cell:hover { background:rgba(47,140,255,.25); box-shadow:inset 0 0 0 1px var(--blue); }
+  .lawn-cell img { width:80%; height:80%; object-fit:contain; pointer-events:none; }
+  .indicator-frozen { position:absolute; inset:0; background:rgba(0,229,255,.3); border:2px solid var(--frozen-color); border-radius:8px; pointer-events:none; }
+  .indicator-endangered { position:absolute; bottom:5px; right:5px; width:12px; height:12px; border-radius:50%; background:var(--endangered-color); box-shadow:0 0 8px var(--endangered-color); pointer-events:none; }
+
+  /* WAVES */
+  .wave { margin-top:15px; padding:18px; background:rgba(255,255,255,.03); border:1px solid var(--border-color); border-left:4px solid var(--blue); border-radius:16px; }
+  .wave:nth-child(even) { border-left-color:var(--red); }
+  .wave-header { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+  .wave-header h3 { margin:0; font:800 18px var(--head); letter-spacing:1.5px; text-transform:uppercase; color:var(--cyan); }
+  .wave-header select { width:auto; margin:0; padding:6px 10px; font-size:12px; }
+  .zombieRow { display:flex; align-items:center; gap:10px; margin-top:10px; padding:10px; background:rgba(255,255,255,.04); border-radius:14px; }
+  .zombie-preview { display:flex; justify-content:center; align-items:center; width:60px; height:60px; padding:5px; cursor:pointer; background:rgba(0,0,0,.3); border:1px solid var(--border-color); border-radius:12px; transition:border-color .2s,background-color .2s; }
+  .zombie-preview:hover { border-color:var(--cyan); box-shadow:0 0 14px var(--accent-glow); }
+  .zombie-preview img { width:45px; height:45px; object-fit:contain; }
+  .zombieRow .lane { flex:1; margin-top:0; height:100%; }
+  .pf-label { display:flex; align-items:center; gap:6px; padding:8px 12px; cursor:pointer; user-select:none; color:var(--pf-color); font-weight:bold; background:rgba(0,0,0,.35); border:1px solid rgba(255,255,255,.08); border-radius:10px; }
+  .pf-label:hover { border-color:var(--pf-color); }
+
+  /* MODALS */
+  .modal-overlay { display:none; position:fixed; inset:0; z-index:1000; justify-content:center; align-items:center; background:rgba(5,6,15,.88); overscroll-behavior:contain; }
+  .modal-content { position:relative; width:90%; max-width:620px; max-height:90vh; overflow-y:auto; padding:28px; background:#0a0e20; border:1px solid rgba(255,255,255,.12); border-radius:24px; box-shadow:0 30px 90px rgba(0,0,0,.7),0 0 60px rgba(47,140,255,.15); }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .modal-header h3 { margin:0; font:900 22px var(--head); letter-spacing:1.5px; text-transform:uppercase; color:#fff; }
+
+  /* FOOTER */
+  footer { margin-top:30px; padding:34px 20px 40px; text-align:center; border-top:1px solid rgba(255,255,255,.07); color:var(--text-muted); font:600 12px var(--head); letter-spacing:2px; text-transform:uppercase; }
+
+  * { scrollbar-width:thin; scrollbar-color:rgba(255,255,255,.22) transparent; }
+  ::-webkit-scrollbar { width:6px; height:6px; }
+  ::-webkit-scrollbar-track { background:transparent; }
+  ::-webkit-scrollbar-thumb { background:rgba(255,255,255,.22); border-radius:6px; }
+
+  @media (max-width:850px) {
+    nav { flex-direction:column; gap:10px; padding:12px 14px; }
+    .menu { width:100%; overflow-x:auto; scrollbar-width:none; }
+    .menu a { white-space:nowrap; padding:8px 12px; font-size:13px; }
+    .hero { padding:40px 16px 24px; }
+    .hero p { font-size:17px; }
+    .wrap { padding:0 14px 20px; }
+    .card { padding:28px 20px; }
+  }
+  @media (prefers-reduced-motion:reduce) { * { animation:none !important; transition:none !important; } }
+
+  /* ===== MODAL REDESIGN (single scroll area, sticky header/footer, bottom sheet on phones) ===== */
+  body:has(.modal-overlay[style*="flex"]) { overflow:hidden; }
+  .modal-overlay { padding:16px; }
+  .modal-content { display:flex; flex-direction:column; overflow:hidden; max-height:90vh; max-height:90dvh; padding:20px; border-radius:22px;
+    box-shadow:0 20px 50px rgba(0,0,0,.6); animation:sheetIn .2s ease-out; }
+  @keyframes sheetIn { from { transform:translateY(20px); opacity:0; } }
+  .modal-header { flex:none; margin-bottom:14px; }
+  .modal-header h3 { font-size:20px; }
+  .modal-header .smallBtn { display:grid; place-items:center; width:40px; height:40px; padding:0; border-radius:12px; font-size:15px; letter-spacing:0;
+    background:rgba(255,255,255,.07); border:1px solid var(--border-color); box-shadow:none; }
+  .modal-header .smallBtn:hover { background:var(--red); border-color:transparent; box-shadow:none; transform:none; }
+  .modal-header .smallBtn::before, .tab-btn::before { display:none; }
+
+  /* segmented tabs */
+  .tab-group { flex:none; gap:4px; padding:4px; margin-bottom:12px; background:rgba(255,255,255,.05); border:1px solid var(--border-color); border-radius:14px; }
+  .tab-btn { min-width:0; margin:0; padding:10px 4px; white-space:nowrap; font-size:13px; letter-spacing:.8px; background:transparent; border:0; border-radius:10px; box-shadow:none; }
+  .tab-btn:hover { transform:none; background:rgba(255,255,255,.06); }
+  .tab-btn.active { background:var(--grad); box-shadow:0 2px 10px rgba(47,140,255,.35); }
+
+  /* search + toggles */
+  .tile-search { flex:none; margin:0 0 10px; padding:11px 14px; }
+  #tileConditions { flex:none; gap:8px; margin-top:0; }
+  #tileConditions .checkbox-label { flex:1 1 130px; justify-content:space-between; flex-direction:row-reverse; padding:9px 14px; font-size:14px; }
+  .checkbox-label input[type=checkbox] { -webkit-appearance:none; appearance:none; position:relative; flex:none; width:38px; height:22px; border-radius:999px;
+    background:rgba(255,255,255,.16); cursor:pointer; transition:background-color .2s; }
+  .checkbox-label input[type=checkbox]::after { content:''; position:absolute; top:3px; left:3px; width:16px; height:16px; border-radius:50%; background:#fff; transition:transform .2s; }
+  .checkbox-label input[type=checkbox]:checked { background:var(--blue); }
+  .checkbox-label input[type=checkbox]:checked::after { transform:translateX(16px); }
+
+  /* grids inside modals: THE scroll area */
+  .modal-content #stageGrid, .modal-content #mowerGrid, .modal-content #zombieGrid,
+  .modal-content #defeatTypeGrid, .modal-content #tilePlantGrid, .modal-content #tileZombieGrid, .modal-content #tileGridItemGrid, .modal-content #tileMoonsoilGrid {
+    flex:1 1 auto; min-height:180px; max-height:none; margin-top:0; padding:10px; gap:10px; overflow-y:auto; overscroll-behavior:contain; -webkit-overflow-scrolling:touch;
+    grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); grid-auto-rows:min-content; align-content:start; }
+  .modal-content #stageGrid { grid-template-columns:repeat(auto-fill,minmax(130px,1fr)); }
+
+  /* cards: sprite + name, clear selected state */
+  .grid-item { min-width:0; flex-direction:column; gap:6px; padding:10px 6px 8px; content-visibility:auto; contain-intrinsic-size:auto 104px; border-radius:14px; }
+  .grid-item:hover { transform:none; }
+  .grid-item img { width:56px; height:56px; }
+  #stageGrid .grid-item img { width:100px; height:60px; }
+  .grid-item[data-value]::after { content:attr(data-value); max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font:500 10px/1.2 'Inter',sans-serif; color:var(--text-muted); }
+  .grid-item.selected { background:rgba(41,212,255,.14); box-shadow:0 0 0 1px var(--cyan); }
+  .grid-item.selected::after { color:#fff; }
+  .grid-item.selected::before { content:'✓'; position:absolute; top:4px; right:4px; display:grid; place-items:center; width:18px; height:18px; border-radius:50%; background:var(--cyan); color:#04101f; font:800 11px/1 sans-serif; }
+  .grid-item.filtered-out { display:none !important; }
+  .izb-sun-warning { bottom:22px; right:2px; }
+
+  /* sticky footer actions */
+  .modal-footer { flex:none; display:flex; gap:10px; margin-top:14px; padding-top:14px; border-top:1px solid rgba(255,255,255,.08); }
+  .modal-footer button { margin:0; }
+
+  @media (max-width:640px) {
+    .modal-overlay { align-items:flex-end; padding:0; }
+    .modal-content { width:100%; max-width:none; max-height:92vh; max-height:92dvh; padding:16px 14px calc(14px + env(safe-area-inset-bottom)); border-radius:22px 22px 0 0; }
+    .modal-content #defeatTypeGrid, .modal-content #tilePlantGrid, .modal-content #tileZombieGrid, .modal-content #tileGridItemGrid, .modal-content #tileMoonsoilGrid, .modal-content #zombieGrid, .modal-content #mowerGrid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  }
+
+  /* no sticky hover effects on touch screens */
+  @media (hover:none) {
+    button:hover { transform:none; box-shadow:none; }
+    button:hover::before { left:-120%; }
+    .grid-item:hover { background:rgba(255,255,255,.04); border-color:transparent; }
+  }
+
+  /* Lawn tiles: visible cell + circle marker so every tile can be seen */
+  .lawn-grid { gap:6px; background:rgba(0,0,0,.45); }
+  .lawn-cell { background:rgba(255,255,255,.09); border:1px solid rgba(255,255,255,.14); }
+  .lawn-cell::before { content:''; width:46%; aspect-ratio:1/1; border-radius:50%; border:2px solid rgba(255,255,255,.32); background:rgba(255,255,255,.06); pointer-events:none; }
+  .lawn-cell:hover::before { border-color:var(--cyan); background:rgba(41,212,255,.18); }
+  .lawn-cell.filled::before { display:none; }
+  .cv-plant { margin-top:12px; padding:14px; border-radius:16px; background:rgba(0,0,0,.3); border:1px solid var(--border-color); }
+  .cv-head { display:flex; align-items:center; gap:10px; font-weight:bold; margin-bottom:10px; }
+  .cv-head img { width:36px; height:36px; object-fit:contain; }
+  .cv-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+  .cv-fields label { font-size:12px; color:var(--text-muted); display:block; }
+  .cv-fields input { width:100%; box-sizing:border-box; }
+  .grid-item.moon-banned { opacity:.25; filter:grayscale(1); cursor:not-allowed; }
+  #autoZombieGrid { flex:1 1 auto; min-height:180px; margin-top:0; padding:10px; gap:10px; overflow-y:auto; overscroll-behavior:contain;
+    grid-template-columns:repeat(auto-fill,minmax(92px,1fr)); grid-auto-rows:min-content; align-content:start;
+    background:rgba(0,0,0,.3); border:1px solid var(--border-color); border-radius:16px; }
+  @media (max-width:640px) { #autoZombieGrid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+  .auto-chip { display:flex; align-items:center; gap:6px; padding:4px 10px 4px 4px; background:var(--bg-input); border:1px solid var(--border-color); border-radius:10px; font-size:12px; color:var(--text-muted); }
+  .auto-chip img { width:28px; height:28px; object-fit:contain; }
+</style>
+</head>
+<body>
+
+<div class="orb o1"></div>
+<div class="orb o2"></div>
+
+<nav>
+  <h1>Evolution</h1>
+  <div class="menu">
+    <a href="https://youtube.com/@pvz2scaredyleaves?si=DRQaLAm1IU94jsW6" target="_blank" rel="noopener">YouTube</a>
+    <a href="https://discord.gg/SMarXCrxEB" target="_blank" rel="noopener">Discord</a>
+    <a href="https://pvzhardtime358-cmd.github.io/Evolution/" target="_blank" rel="noopener">Website</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <h2>Level Editor</h2>
+  <p>Build custom levels for the Evolution mod: pick a stage, set up your lawn, seed bank and waves, then export the JSON.</p>
+</header>
+
+<main class="wrap">
+
+<div class="card">
+  <h2>Level Info</h2>
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Save Slot (output file name):</label>
+  <select id="slotSelect">
+    <option value="1" selected>Slot 1</option>
+    <option value="2">Slot 2</option>
+    <option value="3">Slot 3</option>
+    <option value="4">Slot 4</option>
+    <option value="5">Slot 5</option>
+  </select>
+  <input type="text" id="levelName" placeholder="Level Name">
+  <input type="text" id="levelDesc" placeholder="Level Description">
+  
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top:15px;">Starting Sun Amount:</label>
+  <input type="number" id="globalSun" value="50" min="0" max="9999" placeholder="Default is 50">
+</div>
+
+<div class="card">
+  <h2>Stage</h2>
+  
+  <div class="image-selector-box" onclick="openStageModal()">
+    <span class="image-selector-text" id="stageText" style="display: none;">Click here to select stage</span>
+    <img id="stagePreviewImg" src="EgyptStage.png" alt="Stage Preview" onerror="this.style.opacity='0'; document.getElementById('stageText').style.display='block';" onload="this.style.opacity='1'; document.getElementById('stageText').style.display='none';">
+  </div>
+  <input type="hidden" id="stage" value="EgyptStage">
+
+  <div id="zombieLevelExtra" style="margin-top: 15px;">
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Zombie Level (1 = default):</label>
+    <input type="number" id="zombieLevel" value="1" min="1" placeholder="Example: 4, 5">
+  </div>
+
+  <div id="moonExtra" style="display: none; margin-top: 15px;">
+    <h2 style="font-size: 1.1em;">Moon Stage</h2>
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Add Meteor Fall to the level?</label>
+    <select id="moonMeteorFall">
+      <option value="no">No</option>
+      <option value="yes">Yes</option>
+    </select>
+  </div>
+
+  <div id="skyCityExtra" style="display: none; margin-top: 15px;">
+    <h2 style="font-size: 1.1em;">Sky City Background</h2>
+    <select id="skyCityBgChoice">
+      <option value="full">Full Background</option>
+      <option value="half">Half Background</option>
+    </select>
+  </div>
+</div>
+
+<div class="card" id="jamsCard" style="display: none; border-color: var(--jam-color);">
+  <h2 style="color: var(--jam-color); border-bottom-color: var(--jam-color);">Jams</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Add musical jams and select which wave they start on.</p>
+  <button class="smallBtn" style="background: var(--jam-color); color: #fff;" onclick="addJam()">+ Add Jam</button>
+  <div id="jamsList"></div>
+</div>
+
+<div class="card" id="planksCard" style="display: none; border-color: var(--plank-color);">
+  <h2 style="color: var(--plank-color); border-bottom-color: var(--plank-color);">Pirate Planks</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Select which rows contain planks in the Pirate Seas.</p>
+  <div class="checkbox-group">
+    <label class="checkbox-label"><input type="checkbox" class="plank-cb" value="0"> Row 0</label>
+    <label class="checkbox-label"><input type="checkbox" class="plank-cb" value="1"> Row 1</label>
+    <label class="checkbox-label"><input type="checkbox" class="plank-cb" value="2"> Row 2</label>
+    <label class="checkbox-label"><input type="checkbox" class="plank-cb" value="3"> Row 3</label>
+    <label class="checkbox-label"><input type="checkbox" class="plank-cb" value="4"> Row 4</label>
+  </div>
+</div>
+
+<div class="card" id="tidesCard" style="display: none; border-color: var(--tide-color);">
+  <h2 style="color: var(--tide-color); border-bottom-color: var(--tide-color);">Tides (Big Wave Beach)</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Set starting tide and add tidal changes to specific waves.</p>
+  
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-bottom:5px;">Starting Tide Location (1-9):</label>
+  <input type="number" id="startingTide" min="1" max="9" placeholder="Leave blank for none">
+  
+  <div style="margin-top: 15px;">
+    <button class="smallBtn" style="background: var(--tide-color); color: #fff;" onclick="addTide()">+ Add Wave Tide</button>
+  </div>
+  <div id="tidesList" style="margin-top: 10px;"></div>
+</div>
+
+<div class="card" id="lastStandCard" style="display: none; border-color: var(--ls-color);">
+  <h2 style="color: var(--ls-color); border-bottom-color: var(--ls-color);">Last Stand Modifiers</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Configure initial Sun and Plant Food amounts.</p>
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top:10px;">Starting Sun (Max 9999):</label>
+  <input type="number" id="lsSun" value="3000" min="0" max="9999">
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top:10px;">Starting Plant Food (Max 4):</label>
+  <input type="number" id="lsPlantfood" value="1" min="0" max="4">
+</div>
+
+<div class="card" id="challengesCard">
+  <h2>Challenges (Optional Objectives)</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Select additional win/loss conditions.</p>
+  
+  <div class="checkbox-group">
+    <label class="checkbox-label"><input type="checkbox" id="chal_crossing"> Crossing the lane</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_savemowers"> Save Mowers</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_sunused"> Overspending of suns</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_sunproduced"> Not producing required suns</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_sunholdout"> Sunhold out</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_killzombies"> Killing zombies in seconds</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_plantslost"> Lose plants</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_simulplants"> Put more plants</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_score"> Reach a score</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_defeattype"> Defeat zombies of a chosen type</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_applycond"> Apply effects to zombies</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_fullrow"> Fill a whole lane with plants</label>
+    <label class="checkbox-label"><input type="checkbox" id="chal_survive"> Survive for a set time</label>
+  </div>
+
+  <div id="params_crossing" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Target Distance (1-9):</label>
+    <input type="number" id="val_crossing" value="9" min="1" max="9" step="0.5">
+  </div>
+  <div id="params_sunused" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Maximum Sun Used:</label>
+    <input type="number" id="val_sunused" value="500" min="0">
+  </div>
+  <div id="params_sunproduced" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Target Sun Produced (Max 9999):</label>
+    <input type="number" id="val_sunproduced" value="1000" min="0" max="9999">
+  </div>
+  <div id="params_sunholdout" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Holdout Seconds:</label>
+    <input type="number" id="val_sunholdout" value="60" min="1">
+  </div>
+  
+  <div id="params_killzombies" style="display:none; margin-top:10px;">
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;">
+        <label style="color:var(--text-muted); font-size:0.9em;">Zombies to Kill:</label>
+        <input type="number" id="val_killzombies_count" value="15" min="1">
+      </div>
+      <div style="flex:1;">
+        <label style="color:var(--text-muted); font-size:0.9em;">Time (Seconds):</label>
+        <input type="number" id="val_killzombies_time" value="10" min="1">
+      </div>
+    </div>
+  </div>
+  
+  <div id="params_plantslost" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Maximum Plants Lost:</label>
+    <input type="number" id="val_plantslost" value="5" min="1">
+  </div>
+  <div id="params_score" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Target Score:</label>
+    <input type="number" id="val_score" value="1000" min="1">
+  </div>
+  <div id="params_defeattype" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Zombie Type to Defeat:</label>
+    <div class="image-selector-box" onclick="openDefeatTypeModal()">
+      <span class="image-selector-text" id="defeatTypeText">Click here to select zombie</span>
+      <img id="defeatTypePreviewImg" src="" alt="Zombie Preview" style="opacity: 0;" onerror="this.style.opacity='0'; document.getElementById('defeatTypeText').style.display='block';" onload="this.style.opacity='1'; document.getElementById('defeatTypeText').style.display='none';">
+    </div>
+    <input type="hidden" id="val_defeattype_zombie" value="">
+    <label style="color:var(--text-muted); font-size:0.9em; display:block; margin-top:10px;">How many to defeat:</label>
+    <input type="number" id="val_defeattype_count" value="10" min="1">
+  </div>
+  <div id="params_applycond" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Effect to apply:</label>
+    <select id="val_applycond_type">
+      <option value="chill">Chill</option>
+      <option value="freeze">Freeze</option>
+      <option value="butter">Butter</option>
+      <option value="stun">Stun</option>
+      <option value="stall">Stall</option>
+      <option value="haunted">Haunted</option>
+    </select>
+    <label style="color:var(--text-muted); font-size:0.9em; display:block; margin-top:10px;">How many times:</label>
+    <input type="number" id="val_applycond_count" value="20" min="1">
+  </div>
+  <div id="params_survive" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Time to Survive (Seconds):</label>
+    <input type="number" id="val_survive" value="60" min="1">
+  </div>
+  <div id="params_simulplants" style="display:none; margin-top:10px;">
+    <label style="color:var(--text-muted); font-size:0.9em;">Maximum Simultaneous Plants:</label>
+    <input type="number" id="val_simulplants" value="15" min="1">
+  </div>
+</div>
+
+<div class="card" id="mowersCard">
+  <h2>Lawn Mowers</h2>
+  <div class="image-selector-box" onclick="openMowerModal()">
+    <span class="image-selector-text" id="mowerText">Click here to select mower</span>
+    <img id="mowerPreviewImg" src="" alt="Mower Preview" style="opacity: 0;" onerror="this.style.opacity='0'; document.getElementById('mowerText').style.display='block';" onload="this.style.opacity='1'; document.getElementById('mowerText').style.display='none';">
+  </div>
+  <input type="hidden" id="mower" value="">
+  <button class="secondary-btn" onclick="clearMower()">Clear Mower Selection</button>
+</div>
+
+<div class="card">
+  <h2>Lawn Modifiers</h2>
+  <p style="color: var(--text-muted); font-size: 0.9em;">Click a tile to add initial Plants or Zombies to the lawn.</p>
+  <div id="moonLawnTools" style="display:none; margin-bottom:10px;">
+    <button class="secondary-btn" onclick="fillMoonsoil(true)">Fill whole lawn with Moonsoil</button>
+    <button class="secondary-btn" onclick="fillMoonsoil(false)">Remove all Moonsoil</button>
+  </div>
+  <div class="lawn-grid" id="lawnGrid"></div>
+</div>
+
+<div class="card">
+  <h2>Game Modifiers</h2>
+  
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top: 15px;">Add Default Sun Dropper?</label>
+  <select id="sunDropper">
+    <option value="yes">Yes</option>
+    <option value="no">No</option>
+  </select>
+
+  <label class="checkbox-label" style="justify-content:space-between; flex-direction:row-reverse; margin-top:15px;">
+    <input type="checkbox" id="suppressPlantfood"> Disable Plantfood purchase (can't buy with coins)
+  </label>
+
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top: 15px;">Minigame</label>
+  <select id="minigame" onchange="toggleMinigameOptions()">
+    <option value="">No Minigame</option>
+    <option value="column_like_you_see_em">Column like you see em</option>
+    <option value="Invisighoul">Invisighoul</option>
+    <option value="whack_a_zombie">Whack A Zombie</option>
+    <option value="last_stand">Last Stand</option>
+  </select>
+
+  <div id="znzqParams" style="display: none; margin-top: 10px;">
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Speed Multiplier:</label>
+    <input type="number" id="znzqMultiplier" value="3.5" step="0.1" min="0.1">
+  </div>
+
+  <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top:15px;">Music</label>
+  <select id="music">
+    <option value="">No Music</option>
+    <option value="SpaceMoonThemeModule">SpaceMoonThemeModule</option>
+    <option value="SpaceMoonDMGModule">SpaceMoonDMGModule</option>
+    <option value="SpaceMoonUBModule">SpaceMoonUBModule</option>
+    <option value="PvZ1DayModule">PvZ1DayModule</option>
+    <option value="PvZ1NightModule">PvZ1NightModule</option>
+  </select>
+</div>
+
+<div class="card" id="seedBankCard">
+  <h2>Seed Bank</h2>
+  <select id="seedMode" onchange="enforceSeedModeRestrictions()">
+    <option value="chooser">Chooser (Pick your plants)</option>
+    <option value="preset">Preset (Locked plants)</option>
+    <option value="chooser_preset">Chooser + Preset (Pre-picked plants, then choose more)</option>
+    <option value="conveyor">Conveyor Belt</option>
+  </select>
+  
+  <div id="cooldownDiv" style="margin-top: 15px;">
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Plant Cooldown Multiplier (1 = Normal, 2 = Double, 0 = None):</label>
+    <input type="number" id="cooldownMultiplier" value="1" step="0.1" min="0">
+  </div>
+
+  <label id="seedBankLabel" style="display:block; margin-top:20px; color: var(--text-muted);">Select Plants</label>
+  <div id="plantGrid"></div>
+
+  <div id="conveyorSettings" style="display:none; margin-top:20px;"></div>
+</div>
+
+<div class="card" id="wavesCard">
+  <h2>Waves</h2>
+
+  <label class="checkbox-label" style="justify-content:space-between; flex-direction:row-reverse; margin-bottom:15px;">
+    <input type="checkbox" id="autoWavesToggle" onchange="toggleAutoWaves()"> Automatic Waves (Level Escalation)
+  </label>
+
+  <div id="autoWavesSection" style="display:none; margin-bottom:20px;">
+    <p style="color: var(--text-muted); font-size: 0.9em;">The game generates waves automatically from the zombie pool you choose.</p>
+
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block;">Zombie Pool (zombies that can appear in the level):</label>
+    <button class="secondary-btn" style="margin-top:8px;" onclick="openAutoZombieModal()">Choose Zombies</button>
+    <div id="autoZombiePreview" class="checkbox-group" style="gap:8px;"></div>
+
+    <div class="cv-fields" style="margin-top:15px;">
+      <label>Waves Per Flag <input type="number" id="autoWavesPerFlag" value="10" min="1" oninput="onAutoWaveSettingsChange()"></label>
+      <label>Flag Count <input type="number" id="autoFlagCount" value="4" min="1" oninput="onAutoWaveSettingsChange()"></label>
+      <label>Plantfood To Spawn Count <input type="number" id="autoPlantfood" value="3" min="0"></label>
+      <label>Point Increment Per Wave <input type="number" id="autoPointIncrement" value="100" min="0"></label>
+      <label>Starting Points <input type="number" id="autoStartingPoints" value="150" min="0"></label>
+    </div>
+    <p id="autoTotalInfo" style="color: var(--cyan); font-size: 0.9em; margin:10px 0 0;"></p>
+
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-top:15px;">Wave Contents:</label>
+    <select id="autoWaveMode" onchange="toggleAutoWaves()">
+      <option value="empty">Empty waves (game spawns zombies from the pool)</option>
+      <option value="custom">Choose zombies wave by wave</option>
+    </select>
+  </div>
+
+  <div id="normalFlagBox">
+    <label style="color: var(--text-muted); font-size: 0.9em; display:block; margin-bottom:10px;">Flag Wave Interval (Waves between flags)</label>
+    <input type="number" id="flagInterval" value="10" min="1" placeholder="Flag Wave Interval" style="margin-bottom: 20px;">
+  </div>
+
+  <div id="waveListBox">
+    <button onclick="addWave()">+ Add New Wave</button>
+    <div id="waves"></div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Export</h2>
+  <div style="display: flex; gap: 10px;">
+    <button onclick="generate()" class="export-btn" style="flex: 1;">DOWNLOAD JSON</button>
+  </div>
+  <textarea id="output" readonly placeholder="JSON preview will appear here..."></textarea>
+</div>
+
+</main>
+
+<footer>
+  <div style="text-align: center; margin-bottom: 10px;">©️ All rights reserved to Scaredy Leaves</div>
+  <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-top: 15px;">
+    <span style="color: var(--text-muted); font-size: 0.9em;">Total Visitors:</span>
+    <img src="https://api.visitorbadge.io/api/visitors?path=scaredyleaves.losteditor&labelColor=%2305060f&countColor=%232f8cff&style=flat" alt="Visitor Count">
+  </div>
+</footer>
+
+<!-- Defeat Zombie Type Modal -->
+<div id="defeatTypeModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Select a Zombie</h3>
+      <button class="smallBtn deleteBtn" onclick="closeDefeatTypeModal()">X</button>
+    </div>
+    <div id="defeatTypeGrid"></div>
+  </div>
+</div>
+
+<!-- Automatic Waves Zombie Pool Modal -->
+<div id="autoZombieModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Zombie Pool</h3>
+      <button class="smallBtn deleteBtn" onclick="closeAutoZombieModal()">X</button>
+    </div>
+    <div id="autoZombieGrid" style="display:grid;"></div>
+    <div class="modal-footer">
+      <button onclick="closeAutoZombieModal()" style="flex: 1;">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- Stage Selection Modal -->
+<div id="stageModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Select a Stage</h3>
+      <button class="smallBtn deleteBtn" onclick="closeStageModal()">X</button>
+    </div>
+    <div id="stageGrid"></div>
+  </div>
+</div>
+
+<!-- Mower Selection Modal -->
+<div id="mowerModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Select Lawnmowers</h3>
+      <button class="smallBtn deleteBtn" onclick="closeMowerModal()">X</button>
+    </div>
+    <div id="mowerGrid"></div>
+  </div>
+</div>
+
+<!-- Zombie Selection Modal -->
+<div id="zombieModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Select a Zombie</h3>
+      <button class="smallBtn deleteBtn" onclick="closeZombieModal()">X</button>
+    </div>
+    <div id="zombieGrid"></div>
+  </div>
+</div>
+
+<!-- Lawn Tile Modifiers Modal -->
+<div id="tileModal" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Tile</h3>
+      <button class="smallBtn deleteBtn" onclick="closeTileModal()">X</button>
+    </div>
+    
+    <div class="tab-group" id="tileTabGroup">
+      <button class="tab-btn active" id="tabPlantBtn" onclick="switchTileTab('plant')">Plant</button>
+      <button class="tab-btn" id="tabZombieBtn" onclick="switchTileTab('zombie')">Zombie</button>
+      <button class="tab-btn" id="tabGridItemBtn" onclick="switchTileTab('griditem')">GridItem</button>
+      <button class="tab-btn" id="tabMoonsoilBtn" onclick="switchTileTab('moonsoil')" style="display:none;">Moonsoil</button>
+    </div>
+
+    <input type="text" id="tileSearch" class="tile-search" placeholder="Search by name…" autocomplete="off" oninput="filterTileGrid(this.value)">
+
+    <div class="checkbox-group" id="tileConditions" style="margin-bottom: 12px;">
+      <label class="checkbox-label" id="tileFrozenLabel">
+        <input type="checkbox" id="tileFrozenCb"> Icecubed
+      </label>
+      <label class="checkbox-label" id="tileEndangeredLabel">
+        <input type="checkbox" id="tileEndangeredCb"> Endangered
+      </label>
+    </div>
+
+    <div id="tilePlantGrid" style="display: grid;"></div>
+    <div id="tileZombieGrid" style="display: none;"></div>
+    <div id="tileGridItemGrid" style="display: none;"></div>
+    <div id="tileMoonsoilGrid" style="display: none;"></div>
+
+    <div class="modal-footer">
+      <button onclick="saveTile()" style="flex: 2;">Save to Tile</button>
+      <button class="red" onclick="clearTile()" style="flex: 1;">Clear</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Filter out empty arrays so broken "end tiles" don't appear
+const STAGES = [
+  "EgyptStage", "EgyptNightsStage", "Pvz1Stage", "Pvz1NightsStage", "MoonStage"
+].filter(x => x && x.trim() !== '');
+
+const MOWERS = [
+  "EgyptMowers", "MoonMowers"
+];
+
+// I, Zombie Specific Config
+const IZOMBIE_ZOMBIES = [
+  "tutorial_basic(1)", "tutorial_cone(1)", "tutorial_bucket(1)", "tutorial_brick(1)", "egypt_basic(1)", "egypt_cone(1)", "egypt_bucket(1)", 
+  "egypt_supervisor(1)", "egyptologist(1)", "explorer(1)", "chicken_farmer(1)", "prospector(1)", "cowboy_basic(1)", "cowboy_cone(1)", 
+  "cowboy_bucket(1)", "poncho(1)", "lostcity_basic(1)", "lostcity_cone(1)", "lostcity_bucket(1)", "lostcity_shovel(1)", "lostcity_jane(1)", 
+  "lostcity_skull_veteran(1)", "future_basic(1)", "future_cone(1)", "future_bucket(1)", "future_cyborg(1)", "future_mechcone(1)", 
+  "future_protector(1)"
+].filter(x => x && x.trim() !== '');
+
+const IZOMBIE_BANNED_PLANTS = [
+  "sunflower", "twinsunflower", "sunshroom", "sunbean", "goldbloom", "toadstool", "solartomato", "moonflower", 
+  "primalsunflower", "shinevine", "birthsunflower", "darktwinsunflower", "darkertwinsunflower",
+  "gravebuster", "goldleaf", "megapuff_dummy", "cosmicflower_dummy", "solarpea", "groundcherry", 
+  "cosmicnut_dummy", "iceburg", "cosmicmushroom_dummy", "cosmicbean_dummy", "cosmicpea_dummy", "cosmicflower", 
+  "cosmicnut", "cosmicmushroom", "cosmicbean", "cosmicpea", "megapuff", "plantern"
+];
+
+// ---- Item lists ----
+// These were missing, which crashed initUI() before the lawn was built.
+// They are only used if you haven't defined PLANTS / ZOMBIES / GRIDITEMS elsewhere.
+// Add every name you have a PNG for (name without ".png", exact same capitalization).
+window.PLANTS = [
+  "sunflower", "darktwinsunflower", "peashooter", "firepeashooter", "electricpeashooter", "snowpea",
+  "icequeenpea", "lawpea", "sweetpea", "wallnut", "holonut", "tallnut", "cabbagepult", "kernelpult",
+  "melonpult", "wintermelon", "pepperpult", "turkeypult", "beeshooter", "magnetshroom", "cactus",
+  "cosmoss", "gravetree", "pineclone", "chinesecosmicpea", "cosmicnut", "threepeanut", "potatomine",
+  "iceburg", "cobcannon", "squash", "starfruit", "ghostpepper", "twinsunflower", "repeater",
+  "gatlingpea", "threepeater", "solarcabbagepult", "peanut", "peppercabbage", "coldslaw",
+  "spookysquash", "metalsquash", "starsquash", "triplesunflower"
+];
+
+// Plants that must be written as "<name>_dummy" in Conveyor Belt levels only.
+// (Preset/Chooser use the plain name. PNGs always use the plain name.)
+const DUMMY_CONVEYOR_PLANTS = [
+  "darktwinsunflower", "beeshooter", "sweetpea", "turkeypult", "pepperpult", "cobcannon", "wintermelon",
+  "melonpult", "kernelpult", "threepeanut", "tallnut", "holonut", "lawpea", "icequeenpea",
+  "firepeashooter", "snowpea", "electricpeashooter"
+];
+// Make sure every dummy plant is selectable even if it was missing above
+DUMMY_CONVEYOR_PLANTS.forEach(p => { if (!window.PLANTS.includes(p)) window.PLANTS.push(p); });
+window.ZOMBIES = [
+  "tutorial", "tutorial_armor1", "tutorial_armor2", "tutorial_armor4", "tutorial_flag", "tutorial_flag_veteran",
+  "tutorial_imp", "mummy", "mummy_armor1", "mummy_armor2", "mummy_armor4", "mummy_flag",
+  "ra", "explorer", "explorer_veteran", "cleopatra", "egypt_supervisor", "egypt_supervisor_sarcophagus",
+  "egyptologist", "tomb_raiser", "pharaoh", "egypt_imp", "egypt_gargantuar", "modern_newspaper",
+  "modern_screendoor", "modern_polevaulter", "modern_disco", "modern_backup_dancer", "modern_miner", "moon",
+  "moon_armor1", "moon_armor2", "moon_armor4", "moon_flag", "zcorp_middlemanager", "cosmic_imp",
+  "supernova_gargantuar"
+];
+window.GRIDITEMS = window.GRIDITEMS || ["skycloud", "puddle"];
+// Crystal grid items (exported through InitialGridItemProperties, same as moonsoil)
+const CRYSTAL_GRIDITEMS = ["blue_crystal", "yellow_crystal", "green_crystal", "red_crystal"];
+CRYSTAL_GRIDITEMS.forEach(c => { if (!window.GRIDITEMS.includes(c)) window.GRIDITEMS.push(c); });
+
+let lawnData = {};
+
+function renderGrid(containerId, data, multiSelect = false, isIzombiePackets = false) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = "";
+  data.forEach(item => {
+    const div = document.createElement("div");
+    div.className = "grid-item";
+    div.dataset.value = item;
+    
+    // Dynamically strip the "(1)" for viewing the image locally
+    let imgSrc = item + ".png";
+    if (isIzombiePackets || item.includes("(1)")) {
+      imgSrc = item.replace("(1)", "") + ".png"; 
+    }
+    
+    // If image is missing, the div will hide entirely so no blank end tiles remain
+    div.innerHTML = `<img src="${imgSrc}" loading="lazy" decoding="async" alt="" onerror="this.parentElement.style.display='none';">`;
+    
+    // Add special warning if this is the izb sunflower
+    if (item === "sunflower_izb") {
+      div.innerHTML += `<div class="izb-sun-warning">SUN SOURCE</div>`;
+    }
+
+    if (multiSelect) {
+      div.onclick = function() {
+        if (this.classList.contains("moon-banned")) {
+           alert("This plant is not allowed here (Moon Stage / Last Stand).");
+           return;
+        }
+        if (!this.classList.contains("selected")) {
+           const minigame = document.getElementById("minigame").value;
+           const seedMode = document.getElementById("seedMode").value;
+           if (minigame === "i_zombie" || seedMode === "preset" || seedMode === "chooser_preset") {
+              const maxSel = (minigame !== "i_zombie" && seedMode === "chooser_preset") ? 5 : 8;
+              const currentlySelected = container.querySelectorAll('.grid-item.selected').length;
+              if (currentlySelected >= maxSel) {
+                 alert(`You can only select up to ${maxSel} ${minigame === 'i_zombie' ? 'zombies' : 'plants'} in this mode.`);
+                 return;
+              }
+           }
+        }
+        this.classList.toggle("selected"); 
+        if (container.id === "plantGrid") refreshConveyorSettings();
+      };
+    } else {
+      div.onclick = function() {
+        if (this.classList.contains("moon-banned")) {
+          alert("This plant is not allowed here (Moon Stage / Last Stand).");
+          return;
+        }
+        container.querySelectorAll('.grid-item').forEach(n => n.classList.remove('selected'));
+        this.classList.add('selected');
+      };
+    }
+    container.appendChild(div);
+  });
+}
+
+function initUI() {
+  const setupSimpleGrid = (id, data, onclickFn) => {
+    const el = document.getElementById(id);
+    data.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "grid-item";
+      div.innerHTML = `<img src="${item}.png" loading="lazy" decoding="async" alt="" onerror="this.parentElement.style.display='none';">`;
+      div.onclick = () => onclickFn(item);
+      el.appendChild(div);
+    });
+  };
+
+  // Build the lawn first so it always appears, even if a list below has a problem
+  const lawnGrid = document.getElementById("lawnGrid");
+  lawnGrid.innerHTML = "";
+  for (let y = 0; y < 5; y++) {
+    for (let x = 0; x < 9; x++) {
+      const cell = document.createElement("div");
+      cell.className = "lawn-cell";
+      cell.id = `lawn-cell-${x}-${y}`;
+      cell.onclick = () => openTileModal(x, y);
+      lawnGrid.appendChild(cell);
+    }
+  }
+
+  const safe = (label, fn) => { try { fn(); } catch (e) { console.error("initUI step failed: " + label, e); } };
+  safe("stages", () => setupSimpleGrid("stageGrid", STAGES, selectStage));
+  safe("mowers", () => setupSimpleGrid("mowerGrid", MOWERS, selectMower));
+  safe("zombieGrid", () => setupSimpleGrid("zombieGrid", ZOMBIES, selectZombie));
+  safe("plantGrid", () => renderGrid("plantGrid", PLANTS, true));
+  safe("tileZombieGrid", () => renderGrid("tileZombieGrid", ZOMBIES, false));
+  safe("tileGridItemGrid", () => renderGrid("tileGridItemGrid", GRIDITEMS, false));
+  safe("defeatTypeGrid", () => {
+    setupSimpleGrid("defeatTypeGrid", ZOMBIES, selectDefeatZombie);
+    if (ZOMBIES.length) selectDefeatZombie(ZOMBIES[0], true);
+  });
+  safe("tileMoonsoilGrid", () => renderGrid("tileMoonsoilGrid", ["moonsoil"], false));
+
+  // Setup Challenge Inputs toggle
+  document.querySelectorAll('#challengesCard input[type="checkbox"]').forEach(cb => {
+    cb.addEventListener('change', (e) => {
+      const id = e.target.id.replace('chal_', 'params_');
+      const paramDiv = document.getElementById(id);
+      if (paramDiv) {
+        paramDiv.style.display = e.target.checked ? 'block' : 'none';
+        if (id === 'params_killzombies') {
+           paramDiv.style.display = e.target.checked ? 'flex' : 'none';
+        }
+      }
+    });
+  });
+}
+window.onload = initUI;
+
+// --- UI Logic ---
+// ---- Conveyor Belt per-plant settings ----
+const CONVEYOR_FIELDS = [
+  ["MinCount", 1], ["MaxCount", 1], ["MinWeightFactor", 2],
+  ["MaxWeightFactor", 0], ["Weight", 15], ["MaxCountCooldownSeconds", 15]
+];
+const conveyorSettings = {}; // plant name -> { field: value }
+
+function getConveyorSettings(plant) {
+  const saved = conveyorSettings[plant] || {};
+  const out = {};
+  CONVEYOR_FIELDS.forEach(([f, def]) => {
+    const n = parseFloat(saved[f]);
+    out[f] = isNaN(n) ? def : n;
+  });
+  return out;
+}
+
+function refreshConveyorSettings() {
+  const box = document.getElementById("conveyorSettings");
+  if (!box) return;
+  const minigame = document.getElementById("minigame").value;
+  const seedMode = document.getElementById("seedMode").value;
+  const show = seedMode === "conveyor" && minigame !== "i_zombie" && minigame !== "last_stand" && minigame !== "whack_a_zombie" && minigame !== "its_raining_seeds";
+  if (!show) { box.style.display = "none"; return; }
+
+  // Keep whatever the player already typed
+  box.querySelectorAll("input[data-plant]").forEach(inp => {
+    (conveyorSettings[inp.dataset.plant] = conveyorSettings[inp.dataset.plant] || {})[inp.dataset.field] = inp.value;
+  });
+
+  const plants = Array.from(document.querySelectorAll("#plantGrid .grid-item.selected")).map(el => el.dataset.value);
+  box.innerHTML = "";
+  if (!plants.length) { box.style.display = "none"; return; }
+  box.style.display = "block";
+
+  const title = document.createElement("label");
+  title.style.cssText = "display:block; color:var(--text-muted);";
+  title.textContent = "Conveyor settings for each plant (edit the numbers):";
+  box.appendChild(title);
+
+  plants.forEach(pl => {
+    const cur = getConveyorSettings(pl);
+    const saved = conveyorSettings[pl] || {};
+    const wrap = document.createElement("div");
+    wrap.className = "cv-plant";
+    const head = document.createElement("div");
+    head.className = "cv-head";
+    head.innerHTML = `<img src="${pl}.png" alt="" onerror="this.style.display='none'"><span>${pl}</span>`;
+    wrap.appendChild(head);
+    const fields = document.createElement("div");
+    fields.className = "cv-fields";
+    CONVEYOR_FIELDS.forEach(([f]) => {
+      const l = document.createElement("label");
+      l.textContent = f;
+      const inp = document.createElement("input");
+      inp.type = "number";
+      inp.step = "any";
+      inp.min = "0";
+      inp.dataset.plant = pl;
+      inp.dataset.field = f;
+      inp.value = saved[f] !== undefined && saved[f] !== "" ? saved[f] : cur[f];
+      inp.addEventListener("input", () => {
+        (conveyorSettings[pl] = conveyorSettings[pl] || {})[f] = inp.value;
+      });
+      l.appendChild(inp);
+      fields.appendChild(l);
+    });
+    wrap.appendChild(fields);
+    box.appendChild(wrap);
+  });
+}
+
+function enforceSeedModeRestrictions() {
+  const minigame = document.getElementById("minigame").value;
+  const seedModeSelect = document.getElementById("seedMode");
+  const seedBankLabel = document.getElementById("seedBankLabel");
+  
+  // Disable conveyor strictly for Last Stand
+  if (minigame === "last_stand" && seedModeSelect.value === "conveyor") {
+    seedModeSelect.value = "chooser";
+  }
+
+  // Handle Plant Cooldown UI
+  const cdDiv = document.getElementById("cooldownDiv");
+  if (minigame === "i_zombie" || seedModeSelect.value === "conveyor") {
+    cdDiv.style.display = "none";
+  } else {
+    cdDiv.style.display = "block";
+  }
+
+  // Update seed bank label for preset
+  if (minigame !== "i_zombie") {
+    if (seedModeSelect.value === "preset") {
+      seedBankLabel.innerText = "Select Plants (Click to toggle, Max 8):";
+    } else if (seedModeSelect.value === "chooser_preset") {
+      seedBankLabel.innerText = "Pre-select Plants (they start in the seed bank; the player can still choose more. Max 5):";
+      const sel = Array.from(document.querySelectorAll("#plantGrid .grid-item.selected"));
+      if (sel.length > 5) {
+        sel.slice(5).forEach(n => n.classList.remove("selected"));
+        alert("Chooser + Preset allows a maximum of 5 pre-selected plants. Extra selections were removed.");
+      }
+    } else {
+      seedBankLabel.innerText = "Select Plants (Click to toggle):";
+    }
+  }
+  refreshConveyorSettings();
+}
+
+function isMoonStage() { return document.getElementById("stage").value === "MoonStage"; }
+
+function applyMoonStageRules() {
+  const moon = isMoonStage();
+  const minigame = document.getElementById("minigame").value;
+  const sd = document.getElementById("sunDropper");
+  const lock = moon || ["i_zombie", "last_stand", "whack_a_zombie"].includes(minigame);
+  if (lock && !sd.dataset.prev) sd.dataset.prev = sd.value;
+  if (!lock && sd.dataset.prev) { sd.value = sd.dataset.prev; delete sd.dataset.prev; }
+  if (lock) sd.value = "no";
+  sd.disabled = lock;
+  document.getElementById("moonExtra").style.display = moon ? "block" : "none";
+  applyMoonPlantLock();
+  document.getElementById("moonLawnTools").style.display = (moon && minigame !== "i_zombie") ? "block" : "none";
+  document.getElementById("tabMoonsoilBtn").style.display = (moon && minigame !== "i_zombie") ? "block" : "none";
+}
+
+const MOON_BANNED_PLANTS = ["sunflower", "darktwinsunflower", "triplesunflower", "solarcabbagepult", "twinsunflower"];
+
+// Plants that Last Stand never allows (same list the chooser exclude uses)
+const LAST_STAND_EXCLUDED_PLANTS = [
+  "puffshroom", "gravebuster", "toadstool", "goldleaf", "stallia", "megapuff_dummy",
+  "cosmicflower_dummy", "solarpea", "groundcherry", "cosmicnut_dummy", "iceburg",
+  "cosmicmushroom_dummy", "cosmicbean_dummy", "cosmicpea_dummy", "cosmicflower",
+  "cosmicnut", "cosmicmushroom", "cosmicbean", "cosmicpea", "megapuff", "plantern"
+];
+
+// Every plant that is currently not allowed (MoonStage and/or Last Stand)
+function getBannedPlants() {
+  const minigame = document.getElementById("minigame").value;
+  if (minigame === "i_zombie") return [];
+  let banned = [];
+  if (isMoonStage()) banned = banned.concat(MOON_BANNED_PLANTS);
+  if (minigame === "last_stand") banned = banned.concat(MOON_BANNED_PLANTS, LAST_STAND_EXCLUDED_PLANTS);
+  return banned;
+}
+
+function applyMoonPlantLock() {
+  const banned = getBannedPlants();
+  ["#plantGrid", "#tilePlantGrid"].forEach(sel => {
+    document.querySelectorAll(sel + " .grid-item[data-value]").forEach(el => {
+      const isBanned = banned.includes(el.dataset.value);
+      el.classList.toggle("moon-banned", isBanned);
+      if (isBanned) el.classList.remove("selected");
+    });
+  });
+  refreshConveyorSettings();
+  // Remove banned plants that were already placed on the lawn
+  if (banned.length) {
+    Object.keys(lawnData).forEach(key => {
+      const kept = lawnData[key].filter(d => !(d.type === 'plant' && banned.includes(d.name)));
+      if (kept.length === lawnData[key].length) return;
+      if (kept.length) lawnData[key] = kept; else delete lawnData[key];
+      const [x, y] = key.split(",").map(Number);
+      updateLawnCellVisuals(x, y);
+    });
+  }
+}
+
+function fillMoonsoil(add) {
+  for (let y = 0; y < 5; y++) for (let x = 0; x < 9; x++) {
+    const key = `${x},${y}`;
+    let arr = (lawnData[key] || []).filter(d => d.type !== 'moonsoil');
+    if (add) arr.push({ type: 'moonsoil', name: 'moonsoil', frozen: false, endangered: false });
+    if (arr.length) lawnData[key] = arr; else delete lawnData[key];
+    updateLawnCellVisuals(x, y);
+  }
+}
+
+function toggleMinigameOptions() {
+  const minigame = document.getElementById("minigame").value;
+  const seedCard = document.getElementById("seedBankCard");
+  const wavesCard = document.getElementById("wavesCard");
+  const seedModeSelect = document.getElementById("seedMode");
+  const seedBankLabel = document.getElementById("seedBankLabel");
+  const presetOption = document.querySelector('#seedMode option[value="preset"]');
+  const conveyorOption = document.querySelector('#seedMode option[value="conveyor"]');
+  const lastStandCard = document.getElementById("lastStandCard");
+  const znzqParams = document.getElementById("znzqParams");
+  const sunDropperEl = document.getElementById("sunDropper");
+  const challengesCard = document.getElementById("challengesCard");
+  const mowersCard = document.getElementById("mowersCard");
+
+  lastStandCard.style.display = (minigame === "last_stand") ? "block" : "none";
+  znzqParams.style.display = (minigame === "ZombieNimbleZombieQuick") ? "block" : "none";
+
+  if (minigame === "whack_a_zombie") {
+    seedCard.style.display = "none";
+    wavesCard.style.display = "block";
+    sunDropperEl.disabled = false;
+    challengesCard.style.display = "block";
+    mowersCard.style.display = "block";
+  } else if (minigame === "i_zombie") {
+    seedCard.style.display = "block";
+    wavesCard.style.display = "none";
+    sunDropperEl.value = "no";
+    sunDropperEl.disabled = true;
+    seedModeSelect.value = "preset";
+    seedModeSelect.disabled = true;
+    presetOption.text = "Preset (Locked zombies)";
+    seedBankLabel.innerText = "Select Zombies (Click to toggle, Max 8):";
+    renderGrid("plantGrid", IZOMBIE_ZOMBIES, true, true);
+    challengesCard.style.display = "none";
+    mowersCard.style.display = "none";
+  } else if (minigame === "last_stand") {
+    seedCard.style.display = "block";
+    wavesCard.style.display = "block";
+    sunDropperEl.disabled = false;
+    seedModeSelect.disabled = false;
+    presetOption.text = "Preset (Locked plants)";
+    conveyorOption.disabled = true; // Lock conveyor out
+    if (seedModeSelect.value === "conveyor") seedModeSelect.value = "chooser";
+    renderGrid("plantGrid", PLANTS, true);
+    challengesCard.style.display = "block";
+    mowersCard.style.display = "block";
+  } else {
+    seedCard.style.display = "block";
+    wavesCard.style.display = "block";
+    sunDropperEl.disabled = false;
+    seedModeSelect.disabled = false;
+    conveyorOption.disabled = false;
+    presetOption.text = "Preset (Locked plants)";
+    renderGrid("plantGrid", PLANTS, true);
+    challengesCard.style.display = "block";
+    mowersCard.style.display = "block";
+  }
+
+  enforceSeedModeRestrictions();
+  applyMoonStageRules();
+}
+
+function addJam() {
+  const div = document.createElement("div");
+  div.className = "zombieRow"; 
+  div.innerHTML = `
+    <select class="jamType" style="flex: 2; margin-top: 0;">
+      <option value="jam_8bit">8-Bit Jam</option>
+      <option value="jam_rap">Rap Jam</option>
+      <option value="jam_punk">Punk Jam</option>
+      <option value="jam_metal">Metal Jam</option>
+      <option value="jam_pop">Pop Jam</option>
+      <option value="jam_ballad">Ballad Jam</option>
+    </select>
+    <input class="jamWave" type="number" min="1" placeholder="Wave #" style="flex: 1; margin-top: 0;">
+    <button class="smallBtn deleteBtn" onclick="this.parentElement.remove()">X</button>
+  `;
+  document.getElementById("jamsList").appendChild(div);
+}
+
+function addTide() {
+  const div = document.createElement("div");
+  div.className = "zombieRow"; 
+  div.innerHTML = `
+    <input class="tideLocation" type="number" min="1" max="9" placeholder="Tide Location (1-9)" style="flex: 2; margin-top: 0;">
+    <input class="tideWave" type="number" min="1" placeholder="Wave #" style="flex: 1; margin-top: 0;">
+    <button class="smallBtn deleteBtn" onclick="this.parentElement.remove()">X</button>
+  `;
+  document.getElementById("tidesList").appendChild(div);
+}
+
+// --- Lawn Modifiers Modal Logic ---
+let currentTileX = null;
+let currentTileY = null;
+let currentTileTab = 'plant';
+
+let tilePlantMode = null; // which plant list tilePlantGrid currently holds
+
+function filterTileGrid(q) {
+  q = q.trim().toLowerCase();
+  document.querySelectorAll('#tileModal .grid-item[data-value]').forEach(el => {
+    el.classList.toggle('filtered-out', q !== '' && !el.dataset.value.toLowerCase().includes(q));
+  });
+}
+
+function openTileModal(x, y) {
+  currentTileX = x;
+  currentTileY = y;
+  
+  const minigame = document.getElementById("minigame").value;
+  
+  // Clear previous
+  document.querySelectorAll('#tileModal .grid-item').forEach(n => n.classList.remove('selected'));
+  document.getElementById('tileFrozenCb').checked = false;
+  document.getElementById('tileEndangeredCb').checked = false;
+
+  if (minigame === 'i_zombie') {
+    document.getElementById('tabZombieBtn').style.display = 'none';
+    document.getElementById('tabGridItemBtn').style.display = 'none';
+    document.getElementById('tabMoonsoilBtn').style.display = 'none';
+    document.getElementById('tileConditions').style.display = 'none';
+    const izPlants = PLANTS.filter(p => !IZOMBIE_BANNED_PLANTS.includes(p));
+    if(!izPlants.includes("sunflower_izb")) {
+        izPlants.unshift("sunflower_izb");
+    }
+    if (tilePlantMode !== 'iz') { renderGrid("tilePlantGrid", izPlants, false); tilePlantMode = 'iz'; }
+  } else {
+    document.getElementById('tabZombieBtn').style.display = 'block';
+    document.getElementById('tabGridItemBtn').style.display = 'block';
+    document.getElementById('tabMoonsoilBtn').style.display = isMoonStage() ? 'block' : 'none';
+    document.getElementById('tileConditions').style.display = 'flex';
+    if (tilePlantMode !== 'normal') { renderGrid("tilePlantGrid", PLANTS.filter(p => p !== "sunflower_izb"), false); tilePlantMode = 'normal'; }
+  }
+
+  applyMoonPlantLock();
+  document.getElementById('tileSearch').value = '';
+  filterTileGrid('');
+  switchTileTab('plant');
+  document.getElementById("tileModal").style.display = "flex";
+}
+
+function closeTileModal() { document.getElementById("tileModal").style.display = "none"; }
+
+function switchTileTab(tab) {
+  currentTileTab = tab;
+  document.getElementById('tabPlantBtn').classList.toggle('active', tab === 'plant');
+  document.getElementById('tabZombieBtn').classList.toggle('active', tab === 'zombie');
+  document.getElementById('tabGridItemBtn').classList.toggle('active', tab === 'griditem');
+  document.getElementById('tabMoonsoilBtn').classList.toggle('active', tab === 'moonsoil');
+  
+  document.getElementById('tilePlantGrid').style.display = tab === 'plant' ? 'grid' : 'none';
+  document.getElementById('tileZombieGrid').style.display = tab === 'zombie' ? 'grid' : 'none';
+  document.getElementById('tileGridItemGrid').style.display = tab === 'griditem' ? 'grid' : 'none';
+  document.getElementById('tileMoonsoilGrid').style.display = tab === 'moonsoil' ? 'grid' : 'none';
+  
+  const minigame = document.getElementById("minigame").value;
+  if (minigame !== 'i_zombie') {
+    document.getElementById('tileEndangeredLabel').style.display = tab === 'plant' ? 'flex' : 'none';
+    document.getElementById('tileFrozenLabel').style.display = (tab === 'plant' || tab === 'zombie') ? 'flex' : 'none';
+  } else {
+    document.getElementById('tileEndangeredLabel').style.display = 'none';
+    document.getElementById('tileFrozenLabel').style.display = 'none';
+  }
+}
+
+function saveTile() {
+  const gridId = currentTileTab === 'plant' ? 'tilePlantGrid' : (currentTileTab === 'zombie' ? 'tileZombieGrid' : (currentTileTab === 'moonsoil' ? 'tileMoonsoilGrid' : 'tileGridItemGrid'));
+  const selectedNode = document.querySelector(`#${gridId} .grid-item.selected`);
+  if (!selectedNode) {
+    alert("Please select a plant, zombie or griditem!");
+    return;
+  }
+  
+  const minigame = document.getElementById("minigame").value;
+  const name = selectedNode.dataset.value;
+  const frozen = minigame === 'i_zombie' ? false : document.getElementById('tileFrozenCb').checked;
+  const endangered = (minigame !== 'i_zombie' && currentTileTab === 'plant') ? document.getElementById('tileEndangeredCb').checked : false;
+  
+  if (currentTileTab === 'plant' && getBannedPlants().includes(name)) {
+    alert("This plant is not allowed here (Moon Stage / Last Stand).");
+    return;
+  }
+
+  const key = `${currentTileX},${currentTileY}`;
+  if (!lawnData[key]) lawnData[key] = [];
+  if (currentTileTab === 'moonsoil' && lawnData[key].some(d => d.type === 'moonsoil')) { return; } // no duplicate moonsoil on one tile
+  lawnData[key].push({ type: currentTileTab, name, frozen, endangered });
+  
+  updateLawnCellVisuals(currentTileX, currentTileY);
+  const sb = document.querySelector('#tileModal .modal-footer button');
+  sb.textContent = 'Added ✓'; clearTimeout(sb._t); sb._t = setTimeout(() => sb.textContent = 'Save to Tile', 900);
+  // Modal stays open to allow adding multiple items
+}
+
+function clearTile() {
+  delete lawnData[`${currentTileX},${currentTileY}`];
+  updateLawnCellVisuals(currentTileX, currentTileY);
+  closeTileModal();
+}
+
+function updateLawnCellVisuals(x, y) {
+  const cell = document.getElementById(`lawn-cell-${x}-${y}`);
+  cell.innerHTML = ""; 
+
+  const items = lawnData[`${x},${y}`];
+  cell.classList.toggle('filled', !!(items && items.length));
+  if (items && items.length > 0) {
+    items.forEach((data, index) => {
+      const img = document.createElement("img");
+      img.src = `${data.name}.png`;
+      img.onerror = () => { img.onerror = null; img.style.display = "none"; };
+      
+      if (items.length > 1) {
+        img.style.position = 'absolute';
+        img.style.width = '60%';
+        img.style.height = '60%';
+        if (index === 0) { img.style.top = '0'; img.style.left = '0'; }
+        else if (index === 1) { img.style.bottom = '0'; img.style.right = '0'; }
+        else if (index === 2) { img.style.top = '0'; img.style.right = '0'; }
+        else { img.style.bottom = '0'; img.style.left = '0'; }
+      }
+      
+      cell.appendChild(img);
+
+      if (data.frozen) {
+        const ice = document.createElement("div");
+        ice.className = "indicator-frozen";
+        cell.appendChild(ice);
+      }
+      
+      if (data.endangered) {
+        const endg = document.createElement("div");
+        endg.className = "indicator-endangered";
+        cell.appendChild(endg);
+      }
+    });
+  }
+}
+
+// --- Standard Modals Logic ---
+let currentZombieTarget = null; 
+
+function openStageModal() { document.getElementById("stageModal").style.display = "flex"; }
+function closeStageModal() { document.getElementById("stageModal").style.display = "none"; }
+function selectStage(stageName) {
+  document.getElementById("stagePreviewImg").src = `${stageName}.png`;
+  document.getElementById("stage").value = stageName;
+  document.getElementById("skyCityExtra").style.display = (stageName === "SkyCityStage") ? "block" : "none";
+  
+  document.getElementById("jamsCard").style.display = ["EightiesStage", "EightiesDayStage"].includes(stageName) ? "block" : "none";
+  document.getElementById("planksCard").style.display = ["PirateStage", "PirateNightsStage"].includes(stageName) ? "block" : "none";
+  document.getElementById("tidesCard").style.display = ["BeachStage", "BeachNightStage"].includes(stageName) ? "block" : "none";
+
+  if (stageName !== "MoonStage") fillMoonsoil(false);
+  applyMoonStageRules();
+  closeStageModal();
+}
+
+function openDefeatTypeModal() { document.getElementById("defeatTypeModal").style.display = "flex"; }
+function closeDefeatTypeModal() { document.getElementById("defeatTypeModal").style.display = "none"; }
+function selectDefeatZombie(name, silent) {
+  document.getElementById("val_defeattype_zombie").value = name;
+  document.getElementById("defeatTypePreviewImg").src = `${name}.png`;
+  if (!silent) closeDefeatTypeModal();
+}
+
+function openMowerModal() { document.getElementById("mowerModal").style.display = "flex"; }
+function closeMowerModal() { document.getElementById("mowerModal").style.display = "none"; }
+function selectMower(mowerName) {
+  document.getElementById("mowerPreviewImg").src = `${mowerName}.png`;
+  document.getElementById("mower").value = mowerName;
+  document.getElementById("mowerPreviewImg").style.opacity = '1';
+  document.getElementById("mowerText").style.display = 'none';
+  closeMowerModal();
+}
+function clearMower() {
+  document.getElementById("mowerPreviewImg").src = "";
+  document.getElementById("mowerPreviewImg").style.opacity = "0";
+  document.getElementById("mower").value = "";
+  document.getElementById("mowerText").style.display = "block";
+}
+
+function openZombieModal(element) {
+  currentZombieTarget = element;
+  document.getElementById("zombieModal").style.display = "flex";
+}
+function closeZombieModal() {
+  document.getElementById("zombieModal").style.display = "none";
+  currentZombieTarget = null;
+}
+function selectZombie(zombieName) {
+  if (currentZombieTarget) {
+    currentZombieTarget.querySelector("img").src = `${zombieName}.png`;
+    currentZombieTarget.querySelector(".zombieType").value = zombieName;
+  }
+  closeZombieModal();
+}
+
+window.onclick = function(event) {
+  if (event.target.classList.contains('modal-overlay')) {
+    event.target.style.display = 'none';
+    currentZombieTarget = null;
+  }
+}
+
+// --- Automatic Waves (Level Escalation) ---
+const autoZombiePool = []; // zombie names, in the order they were picked
+
+function isAutoWaves() {
+  return document.getElementById("autoWavesToggle").checked && document.getElementById("minigame").value !== "i_zombie";
+}
+function isAutoCustomWaves() {
+  return isAutoWaves() && document.getElementById("autoWaveMode").value === "custom";
+}
+function getAutoNumbers() {
+  const per = Math.max(1, parseInt(document.getElementById("autoWavesPerFlag").value) || 10);
+  const flags = Math.max(1, parseInt(document.getElementById("autoFlagCount").value) || 4);
+  return { per, flags, total: per * flags };
+}
+function toggleAutoWaves() {
+  const auto = document.getElementById("autoWavesToggle").checked;
+  const custom = document.getElementById("autoWaveMode").value === "custom";
+  document.getElementById("autoWavesSection").style.display = auto ? "block" : "none";
+  document.getElementById("normalFlagBox").style.display = auto ? "none" : "block";
+  document.getElementById("waveListBox").style.display = (!auto || custom) ? "block" : "none";
+  onAutoWaveSettingsChange();
+}
+function onAutoWaveSettingsChange() {
+  const info = document.getElementById("autoTotalInfo");
+  if (!info) return;
+  const n = getAutoNumbers();
+  let txt = `Total waves: ${n.total} (${n.flags} flags × ${n.per} waves per flag)`;
+  if (isAutoCustomWaves()) {
+    const defined = document.querySelectorAll('#waves .wave').length;
+    txt += ` — you have defined ${defined}; the rest will be empty.`;
+  }
+  info.textContent = txt;
+}
+function openAutoZombieModal() {
+  const grid = document.getElementById("autoZombieGrid");
+  if (!grid.children.length) {
+    ZOMBIES.forEach(z => {
+      const div = document.createElement("div");
+      div.className = "grid-item";
+      div.dataset.value = z;
+      div.innerHTML = `<img src="${z}.png" loading="lazy" decoding="async" alt="" onerror="this.parentElement.style.display='none';">`;
+      div.onclick = () => {
+        const i = autoZombiePool.indexOf(z);
+        if (i >= 0) { autoZombiePool.splice(i, 1); div.classList.remove("selected"); }
+        else { autoZombiePool.push(z); div.classList.add("selected"); }
+        renderAutoZombiePreview();
+      };
+      grid.appendChild(div);
+    });
+  }
+  document.getElementById("autoZombieModal").style.display = "flex";
+}
+function closeAutoZombieModal() { document.getElementById("autoZombieModal").style.display = "none"; }
+function renderAutoZombiePreview() {
+  const box = document.getElementById("autoZombiePreview");
+  box.innerHTML = "";
+  autoZombiePool.forEach(z => {
+    const chip = document.createElement("div");
+    chip.className = "auto-chip";
+    chip.innerHTML = `<img src="${z}.png" alt="" onerror="this.style.display='none'"><span>${z}</span>`;
+    box.appendChild(chip);
+  });
+}
+
+// --- Waves ---
+function renumberWaves() {
+  document.querySelectorAll('#waves .wave').forEach((w, i) => {
+    const h = w.querySelector('.wave-header h3');
+    if (h) h.textContent = `Wave ${i + 1}`;
+  });
+  onAutoWaveSettingsChange();
+}
+function addWave() {
+  if (isAutoCustomWaves() && document.querySelectorAll('#waves .wave').length >= getAutoNumbers().total) {
+    alert(`Automatic Waves allows ${getAutoNumbers().total} waves (Flag Count × Waves Per Flag). Increase those values to add more.`);
+    return;
+  }
+  const waveCount = document.querySelectorAll('#waves .wave').length + 1;
+  const w = document.createElement("div");
+  w.className = "wave";
+  w.innerHTML = `
+    <div class="wave-header">
+      <h3>Wave ${waveCount}</h3>
+      <select class="waveSpawnType">
+        <option value="SpawnZombiesJitteredWaveActionProps">Normal Spawn</option>
+        <option value="SpawnZombiesFromGroundSpawnerProps">Spawn From Ground</option>
+      </select>
+      <button class="smallBtn deleteBtn" onclick="this.closest('.wave').remove(); renumberWaves();">Delete Wave</button>
+    </div>
+    <button class="smallBtn" onclick="addZombie(this)">+ Add Zombie</button>
+    <div class="zombies"></div>`;
+  document.getElementById("waves").appendChild(w);
+  onAutoWaveSettingsChange();
+}
+
+function addZombie(btn) {
+  const zombiesDiv = btn.parentElement.querySelector(".zombies");
+  const r = document.createElement("div");
+  r.className = "zombieRow";
+  r.innerHTML = `
+    <div class="zombie-preview" onclick="openZombieModal(this)" title="Click to change zombie">
+      <img src="${ZOMBIES[0]}.png" loading="lazy" decoding="async" alt="" onerror="this.style.display='none';">
+      <input type="hidden" class="zombieType" value="${ZOMBIES[0]}">
+    </div>
+    <select class="jamType" style="display:none;"></select>
+    <input class="lane" type="number" min="1" max="5" placeholder="Row">
+    <label class="pf-label" title="Condition: Plantfood Carrying">
+      <input type="checkbox" class="pfCheckbox"> PF
+    </label>
+    <button class="smallBtn deleteBtn" onclick="this.parentElement.remove()">X</button>`;
+  zombiesDiv.appendChild(r);
+}
+
+// --- Generator ---
+function generate() {
+  const name = document.getElementById("levelName").value || "CustomLevel";
+  const desc = document.getElementById("levelDesc").value || "";
+  const stage = document.getElementById("stage").value;
+  const zombieLevelRaw = parseInt(document.getElementById("zombieLevel").value, 10);
+  const zombieLevel = (isNaN(zombieLevelRaw) || zombieLevelRaw < 1) ? 1 : zombieLevelRaw;
+  const zombieLevelFilled = !isNaN(zombieLevelRaw) && zombieLevelRaw >= 1;
+  let mower = document.getElementById("mower").value;
+  const seedMode = document.getElementById("seedMode").disabled ? "preset" : document.getElementById("seedMode").value;
+  const minigame = document.getElementById("minigame").value;
+  const music = document.getElementById("music").value;
+  const flagInterval = parseInt(document.getElementById("flagInterval").value) || 10;
+  const addSunDropper = document.getElementById("sunDropper").value === "yes" && stage !== "MoonStage";
+  const globalSun = parseInt(document.getElementById("globalSun").value) || 50;
+  const slotNum = ["1","2","3","4","5"].includes(document.getElementById("slotSelect").value) ? document.getElementById("slotSelect").value : "1";
+  const fileName = "customslot" + slotNum + ".json";
+
+  // Automatic Waves (Level Escalation) settings
+  const autoWaves = isAutoWaves();
+  const autoCustom = isAutoCustomWaves();
+  const autoNum = getAutoNumbers();
+  if (autoWaves && autoZombiePool.length === 0) {
+    alert("Automatic Waves needs at least one zombie in the Zombie Pool. Click \"Choose Zombies\" in the Waves section.");
+    return null;
+  }
+  if (autoCustom && document.querySelectorAll(".wave").length > autoNum.total) {
+    alert(`You defined more waves than Flag Count × Waves Per Flag (${autoNum.total}). Waves after #${autoNum.total} were left out.`);
+  }
+
+  const selectedPlantsElements = Array.from(document.querySelectorAll("#plantGrid .grid-item.selected"));
+  const selectedPlants = selectedPlantsElements.map(el => el.dataset.value)
+    .filter(p => !getBannedPlants().includes(p));
+
+  const objects = [];
+  const modules = [
+    "RTID(WidescreenFix@LevelModules)",
+    "RTID(ZombiesDeadWinCon@LevelModules)",
+    "RTID(DefaultZombieWinCondition@LevelModules)"
+  ];
+  
+  if (addSunDropper && minigame !== "i_zombie") {
+    modules.push("RTID(DefaultSunDropper@LevelModules)");
+  }
+  
+  if (minigame !== "i_zombie") {
+    modules.push("RTID(NewWaves@.)");
+  }
+
+  let resourceGroupNames = [];
+  let challenges = []; // Array of RTID strings
+
+  if (minigame === "whack_a_zombie") {
+    resourceGroupNames.push("UI_WHACKZOMBIE");
+    modules.push("RTID(WhackAZombie@CurrentLevel)");
+    challenges.push("RTID(SaveMowers@LevelModules)");
+    if (!mower) mower = "EgyptMowers"; 
+    
+    objects.push({
+      "objclass": "WhackAZombieMinigameProps",
+      "aliases": ["WhackAZombie"],
+      "objdata": {
+        "MalletPopAnim": "POPANIM_UI_WHACKZOMBIE_PVZ1_WHACKZOMBIE_HAMMER",
+        "ImpactPopAnim": "POPANIM_UI_WHACKZOMBIE_PVZ1_WHACKZOMBIE_HAMMER",
+        "SwingSound": "Play_Plant_BonkChoy_Nitro",
+        "ImpactSound": "Play_Bonk",
+        "WhackDamage": 200,
+        "#comment": "Whack cooldown isnt finished",
+        "WhackCooldown": 3,
+        "WhackRect": { "mX": -30, "mY": -30, "mWidth": 60, "mHeight": 60 }
+      }
+    });
+  }
+  else if (minigame === "i_zombie") {
+    modules.push("RTID(IZombieMinigame@CurrentLevel)");
+    modules.push("RTID(IZZombieWinCondition@LevelModules)");
+    modules.push("RTID(IZNoShovel@LevelModules)");
+    modules.push("RTID(IZResistance@LevelModules)");
+    modules.push("RTID(IZInitialTraps@LevelModules)");
+    modules.push("RTID(IZCraters@LevelModules)");
+    modules.push("RTID(IZZombieSpawner@LevelModules)");
+    modules.push("RTID(IZIntro@LevelModules)");
+    
+    objects.push({ "aliases": ["IZombieMinigame"], "objclass": "IZombieMinigameProperties", "objdata": {} });
+    
+    objects.push({
+        "aliases": ["ZombieIZWinCon"],
+        "objclass": "ZombiePropertySheet",
+        "objdata": {
+            "ArtCenter": { "x": 99999999, "y": 99999999 },
+            "AttackRect": { "mHeight": 0, "mWidth": 0, "mX": 99999999, "mY": 99999999 },
+            "ArmDropFraction": -1,
+            "SkipHeadDropState": true,
+            "CanSpawnPlantFood": false,
+            "CanBePlantTossedStrong": false,
+            "CanBePlantTossedWeak": false,
+            "CanBeFlickedOff": false,
+            "ConditionImmunities": [
+                { "Condition": "chill" }, { "Condition": "freeze" }, { "Condition": "stalled" },
+                { "Condition": "stackableslow" }, { "Condition": "sapped" }, { "Condition": "stun" },
+                { "Condition": "butter" }, { "Condition": "shrinking" }, { "Condition": "shrunken" },
+                { "Condition": "poisoned" }, { "Condition": "decaypoison" }, { "Condition": "contagiouspoison" }
+            ],
+            "Cost": 150,
+            "EatDPS": 99999999,
+            "GroundTrackName": "none",
+            "HitRect": { "mHeight": 0, "mWidth": 0, "mX": 0, "mY": 0 },
+            "FireDamageMultiplier": 0.0,
+            "Hitpoints": 5,
+            "ShadowOffset": { "x": 0, "y": 0, "z": 0 },
+            "ZombieArmorProps": [ "RTID(InvincibleArmor@ArmorTypes)" ],
+            "SoundOnDeath": "",
+            "SoundOnWalk": "",
+            "MaxTideLoweredPercent": 0,
+            "IgnoreWaterLine": true,
+            "Speed": 2.0,
+            "SpeedVariance": 0
+        }
+    });
+  }
+  else if (minigame === "last_stand") {
+    modules.push("RTID(LastStand@CurrentLevel)");
+    
+    let lsSun = parseInt(document.getElementById("lsSun").value) || 3000;
+    let lsPf = parseInt(document.getElementById("lsPlantfood").value) || 1;
+    if(lsSun > 9999) lsSun = 9999;
+    if(lsPf > 4) lsPf = 4;
+
+    objects.push({
+      "aliases": ["LastStand"],
+      "objclass": "LastStandMinigameProperties",
+      "objdata": {
+        "StartingPlantfood": lsPf,
+        "StartingSun": lsSun
+      }
+    });
+
+    challenges.push("RTID(BeatTheLevel@CurrentLevel)");
+    objects.push({
+      "aliases": ["BeatTheLevel"],
+      "objclass": "StarChallengeBeatTheLevelProps",
+      "objdata": {
+        "Description": "[STARCHALLENGE_LASTSTAND_MINIGAME]",
+        "DescriptiveName": "[STARCHALLENGE_LASTSTAND_MINIGAME_NAME]"
+      }
+    });
+  }
+  else if (minigame === "ZombieNimbleZombieQuick") {
+    const speedMult = parseFloat(document.getElementById("znzqMultiplier").value) || 3.5;
+    modules.push("RTID(ZombieNimbleZombieQuick@CurrentLevel)");
+    objects.push({
+      "objclass": "ZombieNimbleZombieQuickProperties",
+      "aliases": ["ZombieNimbleZombieQuick"],
+      "objdata": { "SpeedMultiplier": speedMult }
+    });
+  }
+  else if (minigame === "column_like_you_see_em") {
+    modules.push("RTID(ColumnMinigame@CurrentLevel)");
+    objects.push({ "aliases": ["ColumnMinigame"], "objclass": "ColumnMinigameProperties", "objdata": {} });
+  }
+  else if (minigame === "Invisighoul") {
+    modules.push("RTID(InvisighoulMinigame@CurrentLevel)");
+    objects.push({ "aliases": ["InvisighoulMinigame"], "objdata": {}, "objclass": "InvisighoulMinigameProperties" });
+  }
+
+  // ZombieNimbleZombieQuick is added to every level (the minigame branch above already adds its own)
+  if (!modules.includes("RTID(ZombieNimbleZombieQuick@CurrentLevel)")) {
+    modules.push("RTID(ZombieNimbleZombieQuick@CurrentLevel)");
+    objects.push({
+      "objclass": "ZombieNimbleZombieQuickProperties",
+      "aliases": ["ZombieNimbleZombieQuick"],
+      "objdata": { "SpeedMultiplier": 1.0 }
+    });
+  }
+
+  // Handle Multi-Select Challenges (if not i_zombie)
+  if (minigame !== "i_zombie") {
+    if (document.getElementById("chal_crossing").checked) {
+      challenges.push("RTID(ZombieDistance@.)");
+      objects.push({
+        "aliases": ["ZombieDistance"],
+        "objclass": "StarChallengeZombieDistanceProps",
+        "objdata": { "TargetDistance": parseFloat(document.getElementById("val_crossing").value) || 9 }
+      });
+    }
+    if (document.getElementById("chal_savemowers").checked && !challenges.includes("RTID(SaveMowers@LevelModules)")) {
+      challenges.push("RTID(SaveMowers@LevelModules)");
+    }
+    if (document.getElementById("chal_sunused").checked) {
+      challenges.push("RTID(SunUsed@.)");
+      objects.push({
+        "aliases": ["SunUsed"],
+        "objclass": "StarChallengeSunUsedProps",
+        "objdata": { "MaximumSun": parseInt(document.getElementById("val_sunused").value) || 500 }
+      });
+    }
+    if (document.getElementById("chal_sunproduced").checked) {
+      challenges.push("RTID(SunProduced@.)");
+      objects.push({
+        "aliases": ["SunProduced"],
+        "objclass": "StarChallengeSunProducedProps",
+        "objdata": { "TargetSun": parseInt(document.getElementById("val_sunproduced").value) || 1000 }
+      });
+    }
+    if (document.getElementById("chal_sunholdout").checked) {
+      challenges.push("RTID(SunHoldout@.)");
+      objects.push({
+        "aliases": ["SunHoldout"],
+        "objclass": "StarChallengeSpendSunHoldoutProps",
+        "objdata": { "HoldoutSeconds": parseInt(document.getElementById("val_sunholdout").value) || 60 }
+      });
+    }
+    if (document.getElementById("chal_killzombies").checked) {
+      challenges.push("RTID(KillZombies@.)");
+      objects.push({
+        "aliases": ["KillZombies"],
+        "objclass": "StarChallengeKillZombiesInTimeProps",
+        "objdata": { 
+          "ZombiesToKill": parseInt(document.getElementById("val_killzombies_count").value) || 15,
+          "Time": parseInt(document.getElementById("val_killzombies_time").value) || 10
+        }
+      });
+    }
+    if (document.getElementById("chal_plantslost").checked) {
+      challenges.push("RTID(PlantsLost@.)");
+      objects.push({
+        "aliases": ["PlantsLost"],
+        "objclass": "StarChallengePlantsLostProps",
+        "objdata": { "MaximumPlantsLost": parseInt(document.getElementById("val_plantslost").value) || 5 }
+      });
+    }
+    if (document.getElementById("chal_simulplants").checked) {
+      challenges.push("RTID(SimultaneousPlants@.)");
+      objects.push({
+        "aliases": ["SimultaneousPlants"],
+        "objclass": "StarChallengeSimultaneousPlantsProps",
+        "objdata": { "MaximumPlants": parseInt(document.getElementById("val_simulplants").value) || 15 }
+      });
+    }
+  }
+
+  // New objectives (not for i_zombie)
+  if (minigame !== "i_zombie") {
+    if (document.getElementById("chal_score").checked) {
+      challenges.push("RTID(ReachTheScore@.)");
+      objects.push({
+        "aliases": ["ReachTheScore"],
+        "objclass": "StarChallengeTargetScoreProps",
+        "objdata": {
+          "TargetScore": parseInt(document.getElementById("val_score").value) || 1000,
+          "Description": "[STARCHALLENGE_TARGET_SCORE]",
+          "DescriptionFailure": "[STARCHALLENGE_TARGET_SCORE_FAILURE]",
+          "DescriptiveName": "[STARCHALLENGE_TARGET_SCORE_NAME]"
+        }
+      });
+      if (!modules.includes("RTID(LevelScoring@.)")) {
+        modules.push("RTID(LevelScoring@.)");
+        objects.push({
+          "aliases": ["LevelScoring"],
+          "objclass": "LevelScoringModuleProperties",
+          "objdata": {
+            "PlantBonusMultiplier": 0,
+            "PlantBonuses": [],
+            "ScoringRulesType": "Rift",
+            "StartingPlantfood": 0
+          }
+        });
+      }
+    }
+    if (document.getElementById("chal_defeattype").checked) {
+      challenges.push("RTID(DefeatZombiesOfType@.)");
+      const zType = document.getElementById("val_defeattype_zombie").value;
+      objects.push({
+        "aliases": ["DefeatZombiesOfType"],
+        "objclass": "DefeatZombiesOfTypeChallengeProps",
+        "objdata": {
+          "Description": "[DEFEAT_X_ZOMBIES]",
+          "NumZombiesToKill": parseInt(document.getElementById("val_defeattype_count").value) || 10,
+          "TypesToKill": { "List": zType ? [zType] : [], "ListType": "includelist" }
+        }
+      });
+    }
+    if (document.getElementById("chal_applycond").checked) {
+      challenges.push("RTID(ApplyZombieConditions@.)");
+      objects.push({
+        "aliases": ["ApplyZombieConditions"],
+        "objclass": "ApplyZombieConditionsChallengeProps",
+        "objdata": {
+          "NumZombieConditionsToApply": parseInt(document.getElementById("val_applycond_count").value) || 20,
+          "ConditionToInflict": [document.getElementById("val_applycond_type").value]
+        }
+      });
+    }
+    if (document.getElementById("chal_fullrow").checked) {
+      challenges.push("RTID(PlantFullRow@.)");
+      objects.push({
+        "aliases": ["PlantFullRow"],
+        "objclass": "PlantFullRowChallengeProps",
+        "objdata": { "NumPlantsInRowNeeded": 9 }
+      });
+    }
+    if (document.getElementById("chal_survive").checked) {
+      challenges.push("RTID(LevelTimer@.)");
+      objects.push({
+        "aliases": ["LevelTimer"],
+        "objclass": "StarChallengeLevelTimerProperties",
+        "objdata": { "TimeLimit": parseInt(document.getElementById("val_survive").value) || 60 }
+      });
+    }
+  }
+
+  // Process Lawn Modifiers (Initial Plants & Zombies)
+  let initialZombies = [];
+  let initialPlants = [];
+  let protectPlants = [];
+  let initialGridItems = [];
+  let moonsoilPlacements = [];
+  let crystalPlacements = [];
+  const bannedNow = getBannedPlants();
+
+  for (let key in lawnData) {
+    const [x, y] = key.split(",");
+    const items = lawnData[key];
+    
+    items.forEach(data => {
+      if (data.type === 'zombie') {
+        let zObj = { "GridY": y, "GridX": x, "TypeName": data.name };
+        if (data.frozen && minigame !== "i_zombie") zObj["Condition"] = "icecubed";
+        initialZombies.push(zObj);
+      } 
+      else if (data.type === 'plant' && !bannedNow.includes(data.name)) {
+        let pObj = { "GridY": y, "GridX": x, "TypeName": data.name };
+        if (data.frozen && minigame !== "i_zombie") pObj["Condition"] = "icecubed";
+        initialPlants.push(pObj);
+        
+        if (data.endangered && minigame !== "i_zombie") {
+          protectPlants.push({ "GridY": y, "GridX": x, "PlantType": data.name });
+        }
+      }
+      else if (data.type === 'moonsoil') {
+        if (stage === "MoonStage") moonsoilPlacements.push({ "GridX": parseInt(x), "GridY": parseInt(y), "TypeName": "moonsoil" });
+      }
+      else if (data.type === 'griditem' && CRYSTAL_GRIDITEMS.includes(data.name)) {
+        crystalPlacements.push({ "GridY": parseInt(y), "GridX": parseInt(x), "TypeName": data.name });
+      }
+      else if (data.type === 'griditem') {
+        initialGridItems.push({ "GridY": y, "GridX": x, "TypeName": data.name });
+      }
+    });
+  }
+
+  if (initialZombies.length > 0) {
+    modules.push("RTID(MountingZombies@.)");
+    objects.push({
+      "aliases": ["MountingZombies"],
+      "objclass": "InitialZombieProperties",
+      "objdata": { "InitialZombiePlacements": initialZombies }
+    });
+  }
+
+  if (initialPlants.length > 0) {
+    modules.push("RTID(MountingPlants@.)");
+    objects.push({
+      "aliases": ["MountingPlants"],
+      "objclass": "InitialPlantProperties",
+      "objdata": { "InitialPlantPlacements": initialPlants }
+    });
+  }
+
+  // Crystals are written first, then moonsoil, inside the same InitialGridItemProperties
+  if (moonsoilPlacements.length > 0 || (stage === "MoonStage" && crystalPlacements.length > 0)) {
+    modules.push("RTID(MoonLawn@.)");
+    objects.push({
+      "aliases": ["MoonLawn"],
+      "objclass": "InitialGridItemProperties",
+      "objdata": { "InitialGridItemPlacements": crystalPlacements.concat(moonsoilPlacements) }
+    });
+  } else if (crystalPlacements.length > 0) {
+    modules.push("RTID(MountingCrystals@.)");
+    objects.push({
+      "aliases": ["MountingCrystals"],
+      "objclass": "InitialGridItemProperties",
+      "objdata": { "InitialGridItemPlacements": crystalPlacements }
+    });
+  }
+
+  if (initialGridItems.length > 0) {
+    modules.push("RTID(MountingGravestones@.)");
+    objects.push({
+      "aliases": ["MountingGravestones"],
+      "objclass": "GravestoneProperties",
+      "objdata": { "ForceSpawnData": initialGridItems }
+    });
+  }
+
+  if (protectPlants.length > 0) {
+    challenges.push("RTID(ProtectThePlant@.)");
+    objects.push({
+      "aliases": ["ProtectThePlant"],
+      "objclass": "ProtectThePlantChallengeProperties",
+      "objdata": {
+        "MustProtectCount": protectPlants.length,
+        "Plants": protectPlants
+      }
+    });
+  }
+
+  // Compile Unified Challenge Module if any challenges exist
+  if (challenges.length > 0) {
+    const chModName = (minigame === "last_stand") ? "RTID(ChallengeModule@CurrentLevel)" : "RTID(ChallengeModule@.)";
+    modules.push(chModName);
+    objects.push({
+      "aliases": ["ChallengeModule"],
+      "objclass": "StarChallengeModuleProperties",
+      "objdata": {
+        "Challenges": [challenges], 
+        "ChallengesAlwaysAvailable": true
+      }
+    });
+  }
+
+  if (mower) modules.push(`RTID(${mower}@LevelModules)`);
+
+  if (stage === "MoonStage" && minigame !== "i_zombie") {
+    const moonMods = ["RTID(ItsRainingSeedsMoon@LevelModules)", "RTID(SlowSunDropper@LevelModules)"];
+    if (document.getElementById("moonMeteorFall").value === "yes") moonMods.push("RTID(MbzMeteorFall@LevelModules)");
+    moonMods.forEach(m => {
+      if (!modules.includes(m)) modules.push(m);
+    });
+  }
+
+  if (stage === "WestNightsStage") modules.push("RTID(WestNightFogEffect@LevelModules)");
+  if (stage === "FutureCatStage") modules.push("RTID(FutureNightsDynamicEffects@LevelModules)");
+  if (stage === "BeachNightStage") modules.push("RTID(BeachNightStageBackground@LevelModules)");
+
+  if (stage === "PirateStage" || stage === "PirateNightsStage") {
+    const plankCbs = document.querySelectorAll(".plank-cb:checked");
+    if (plankCbs.length > 0) {
+      const plankRows = Array.from(plankCbs).map(cb => parseInt(cb.value));
+      modules.push("RTID(Planks@.)");
+      objects.push({
+        "aliases": ["Planks"],
+        "objclass": "PiratePlankProperties",
+        "objdata": { "PlankRows": plankRows }
+      });
+    }
+  }
+
+  const tideStages = ["BeachStage", "BeachNightStage"];
+  const useTides = tideStages.includes(stage);
+  const tideMap = {};
+  if (useTides) {
+    const startingTide = parseInt(document.getElementById("startingTide").value);
+    if (startingTide >= 1 && startingTide <= 9) {
+      modules.push("RTID(Tide@.)");
+      objects.push({
+        "aliases": ["Tide"],
+        "objclass": "TideProperties",
+        "objdata": { "StartingWaveLocation": startingTide }
+      });
+    }
+    document.querySelectorAll("#tidesList .zombieRow").forEach(row => {
+      const waveNum = parseInt(row.querySelector(".tideWave").value);
+      const tLoc = parseInt(row.querySelector(".tideLocation").value);
+      if (waveNum && tLoc >= 1 && tLoc <= 9) { tideMap[waveNum] = tLoc; }
+    });
+  }
+
+  const jamStages = ["EightiesStage", "EightiesDayStage"];
+  const useJams = jamStages.includes(stage);
+  const jamMap = {};
+  if (useJams) {
+    document.querySelectorAll("#jamsList .zombieRow").forEach(row => {
+      const waveNum = parseInt(row.querySelector(".jamWave").value);
+      const jamType = row.querySelector(".jamType").value;
+      if (waveNum && jamType) { jamMap[waveNum] = jamType; }
+    });
+  }
+
+  if (stage === "PoolDayLightStage" || stage === "PoolNightStage") {
+    modules.push("RTID(MountingOthers@.)");
+    objects.push({
+      "aliases": ["MountingOthers"],
+      "objclass": "InitialGridItemProperties",
+      "objdata": {
+        "InitialGridItemPlacements": [
+          { "GridY": "1", "GridX": "0", "TypeName": "puddle" }, { "GridY": "1", "GridX": "1", "TypeName": "puddle" }, { "GridY": "1", "GridX": "2", "TypeName": "puddle" }, { "GridY": "1", "GridX": "3", "TypeName": "puddle" }, { "GridY": "1", "GridX": "4", "TypeName": "puddle" }, { "GridY": "1", "GridX": "5", "TypeName": "puddle" }, { "GridY": "1", "GridX": "6", "TypeName": "puddle" }, { "GridY": "1", "GridX": "7", "TypeName": "puddle" }, { "GridY": "1", "GridX": "8", "TypeName": "puddle" },
+          { "GridY": "2", "GridX": "0", "TypeName": "puddle" }, { "GridY": "2", "GridX": "1", "TypeName": "puddle" }, { "GridY": "2", "GridX": "2", "TypeName": "puddle" }, { "GridY": "2", "GridX": "3", "TypeName": "puddle" }, { "GridY": "2", "GridX": "4", "TypeName": "puddle" }, { "GridY": "2", "GridX": "5", "TypeName": "puddle" }, { "GridY": "2", "GridX": "6", "TypeName": "puddle" }, { "GridY": "2", "GridX": "7", "TypeName": "puddle" }, { "GridY": "2", "GridX": "8", "TypeName": "puddle" },
+          { "GridY": "3", "GridX": "0", "TypeName": "puddle" }, { "GridY": "3", "GridX": "1", "TypeName": "puddle" }, { "GridY": "3", "GridX": "2", "TypeName": "puddle" }, { "GridY": "3", "GridX": "3", "TypeName": "puddle" }, { "GridY": "3", "GridX": "4", "TypeName": "puddle" }, { "GridY": "3", "GridX": "5", "TypeName": "puddle" }, { "GridY": "3", "GridX": "6", "TypeName": "puddle" }, { "GridY": "3", "GridX": "7", "TypeName": "puddle" }, { "GridY": "3", "GridX": "8", "TypeName": "puddle" }
+        ]
+      }
+    });
+  }
+
+  if (stage === "SkyCityStage") {
+    const choice = document.getElementById("skyCityBgChoice").value;
+    modules.push("RTID(SkyCitySky@CurrentLevel)");
+
+    if (choice === "full") {
+      modules.push("RTID(SkyCityFullBackground@LevelModules)");
+      objects.push({
+        "aliases": ["SkyCitySky"],
+        "objclass": "GravestoneProperties",
+        "objdata": {
+          "ForceSpawnData": [
+            { "GridY": "0", "GridX": "0", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "1", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "2", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "3", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "4", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "5", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "6", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "7", "TypeName": "skycloud" }, { "GridY": "0", "GridX": "8", "TypeName": "skycloud" },
+            { "GridY": "1", "GridX": "0", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "1", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "2", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "3", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "4", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "5", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "6", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "7", "TypeName": "skycloud" }, { "GridY": "1", "GridX": "8", "TypeName": "skycloud" },
+            { "GridY": "2", "GridX": "0", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "1", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "2", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "3", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "4", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "5", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "6", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "7", "TypeName": "skycloud" }, { "GridY": "2", "GridX": "8", "TypeName": "skycloud" },
+            { "GridY": "3", "GridX": "0", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "1", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "2", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "3", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "4", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "5", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "6", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "7", "TypeName": "skycloud" }, { "GridY": "3", "GridX": "8", "TypeName": "skycloud" },
+            { "GridY": "4", "GridX": "0", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "1", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "2", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "3", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "4", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "5", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "6", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "7", "TypeName": "skycloud" }, { "GridY": "4", "GridX": "8", "TypeName": "skycloud" }
+          ]
+        }
+      });
+    } else {
+      modules.push("RTID(SkyCityBackground@LevelModules)");
+      objects.push({
+        "aliases": ["SkyCitySky"],
+        "objclass": "InitialGridItemProperties",
+        "objdata": {
+          "InitialGridItemPlacements": [
+            { "GridX": 3, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 3, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 3, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 3, "GridY": 2, "TypeName": "skycloud" }, { "GridX": 3, "GridY": 4, "TypeName": "skycloud" },
+            { "GridX": 4, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 4, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 4, "GridY": 4, "TypeName": "skycloud" }, { "GridX": 4, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 4, "GridY": 2, "TypeName": "skycloud" },
+            { "GridX": 5, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 5, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 5, "GridY": 2, "TypeName": "skycloud" }, { "GridX": 5, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 5, "GridY": 4, "TypeName": "skycloud" },
+            { "GridX": 6, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 6, "GridY": 2, "TypeName": "skycloud" }, { "GridX": 6, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 6, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 6, "GridY": 4, "TypeName": "skycloud" },
+            { "GridX": 8, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 8, "GridY": 2, "TypeName": "skycloud" }, { "GridX": 8, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 8, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 8, "GridY": 4, "TypeName": "skycloud" },
+            { "GridX": 7, "GridY": 0, "TypeName": "skycloud" }, { "GridX": 7, "GridY": 1, "TypeName": "skycloud" }, { "GridX": 7, "GridY": 3, "TypeName": "skycloud" }, { "GridX": 7, "GridY": 2, "TypeName": "skycloud" }, { "GridX": 7, "GridY": 4, "TypeName": "skycloud" }
+          ]
+        }
+      });
+    }
+  }
+
+  // Seed Bank Processing
+  if (minigame !== "its_raining_seeds" && minigame !== "whack_a_zombie" && minigame !== "i_zombie") {
+    
+    // Plant Cooldown Multiplier Setup
+    const cdMult = parseFloat(document.getElementById("cooldownMultiplier").value);
+    if (seedMode !== "conveyor" && !isNaN(cdMult) && cdMult !== 1) {
+      modules.push("RTID(plantsRollback@.)");
+      objects.push({
+        "aliases": ["plantsRollback"],
+        "objclass": "PlantCooldownModifierProperties",
+        "objdata": { "CooldownMultiplier": cdMult }
+      });
+    }
+
+    if (seedMode === "chooser" || seedMode === "chooser_preset") {
+      modules.push("RTID(SeedBank@CurrentLevel)");
+      
+      let sbData = {};
+      if (seedMode === "chooser_preset" && selectedPlants.length > 0) {
+        sbData["PresetPlantList"] = selectedPlants.slice(0, 5).map(p => ({ PlantType: p, Level: -1 }));
+      }
+      sbData["SelectionMethod"] = "chooser";
+      
+      if (minigame === "last_stand") {
+        sbData["ExcludeListSunProducers"] = "true";
+        sbData["PlantExcludeList"] = [
+          "puffshroom", "gravebuster", "toadstool", "goldleaf", "stallia", "megapuff_dummy",
+          "cosmicflower_dummy", "solarpea", "groundcherry", "cosmicnut_dummy", "iceburg",
+          "cosmicmushroom_dummy", "cosmicbean_dummy", "cosmicpea_dummy", "cosmicflower",
+          "cosmicnut", "cosmicmushroom", "cosmicbean", "cosmicpea", "megapuff", "plantern"
+        ];
+      }
+      
+      if (stage === "MoonStage" || minigame === "last_stand") {
+        const ex = new Set(sbData["PlantExcludeList"] || []);
+        MOON_BANNED_PLANTS.forEach(p => ex.add(p));
+        sbData["PlantExcludeList"] = Array.from(ex);
+      }
+
+      objects.push({
+        aliases: ["SeedBank"],
+        objclass: "SeedBankProperties",
+        objdata: sbData
+      });
+    } else if (seedMode === "preset") {
+      modules.push("RTID(SeedBank@CurrentLevel)");
+      objects.push({
+        aliases: ["SeedBank"],
+        objclass: "SeedBankProperties",
+        objdata: {
+          SelectionMethod: "preset",
+          PresetPlantList: selectedPlants.map(p => ({ PlantType: p, Level: -1 }))
+        }
+      });
+    } else if (seedMode === "conveyor" && minigame !== "last_stand") {
+      modules.push("RTID(ConveyorBelt@CurrentLevel)");
+      objects.push({
+        aliases: ["ConveyorBelt"],
+        objclass: "ConveyorSeedBankProperties",
+        objdata: {
+          DropDelayConditions: [{ Delay: 3, MaxPackets: 0 }, { Delay: 5, MaxPackets: 4 }],
+          InitialPlantList: selectedPlants.map(p => {
+            const c = getConveyorSettings(p);
+            return {
+              MinCount: c.MinCount,
+              MaxCount: c.MaxCount,
+              MinWeightFactor: c.MinWeightFactor,
+              MaxWeightFactor: c.MaxWeightFactor,
+              Weight: c.Weight,
+              MaxCountCooldownSeconds: c.MaxCountCooldownSeconds,
+              PlantType: DUMMY_CONVEYOR_PLANTS.includes(p) ? p + "_dummy" : p
+            };
+          }),
+          SpeedConditions: [{ MaxPackets: 0, Speed: 100 }]
+        }
+      });
+    }
+  } else if (minigame === "i_zombie") {
+      modules.push("RTID(SeedBank@CurrentLevel)");
+      objects.push({
+        aliases: ["SeedBank"],
+        objclass: "SeedBankProperties",
+        objdata: {
+          SelectionMethod: "preset",
+          // Add back the "(1)" for the game code to recognize the zombies properly
+          PresetPlantList: selectedPlants.map(z => ({ PlantType: (z.includes("(1)") ? z : z+"(1)"), Level: -1 }))
+        }
+      });
+  }
+  
+  const waveRefs = [];
+  if (minigame !== "i_zombie" && !(autoWaves && !autoCustom)) {
+    document.querySelectorAll(".wave").forEach((w, i) => {
+      const waveNum = i + 1;
+      if (autoWaves && waveNum > autoNum.total) return;
+      const waveName = `Wave${waveNum}`;
+      const zombies = [];
+      let pfCount = 0;
+
+      w.querySelectorAll(".zombieRow").forEach(z => {
+        if (!z.querySelector(".zombieType")) return;
+
+        const type = z.querySelector(".zombieType")?.value;
+        const row = z.querySelector(".lane")?.value;
+        const hasPf = z.querySelector(".pfCheckbox")?.checked;
+        
+        if (type) {
+          if (hasPf) pfCount++;
+          let zObj = { Type: `RTID(${type}@ZombieTypes)` };
+          if (row) zObj.Row = parseInt(row);
+          zombies.push(zObj);
+        }
+      });
+
+      if (autoWaves && zombies.length === 0 && !(useJams && jamMap[waveNum]) && !(useTides && tideMap[waveNum])) {
+        waveRefs.push([]);
+        return;
+      }
+
+      let waveClass = w.querySelector(".waveSpawnType").value;
+      if (minigame === "whack_a_zombie") waveClass = "SpawnZombiesFromGroundSpawnerProps";
+
+      let waveData = { Zombies: zombies };
+      if (pfCount > 0) waveData.AdditionalPlantfood = pfCount;
+
+      objects.push({
+        aliases: [waveName],
+        objclass: waveClass,
+        objdata: waveData
+      });
+      
+      let waveActions = [`RTID(${waveName}@CurrentLevel)`];
+      
+      if (useJams && jamMap[waveNum]) {
+        const jamName = `w${waveNum}jams`;
+        waveActions.push(`RTID(${jamName}@.)`);
+        objects.push({
+          aliases: [jamName],
+          objclass: "SpawnZombiesJitteredWaveActionProps",
+          objdata: { NotificationEvents: [jamMap[waveNum]] }
+        });
+      }
+
+      if (useTides && tideMap[waveNum]) {
+        const tideName = `w${waveNum}tide`;
+        waveActions.push(`RTID(${tideName}@.)`);
+        objects.push({
+          aliases: [tideName],
+          objclass: "TidalChangeWaveActionProps",
+          objdata: {
+            TidalChange: { ChangeAmount: tideMap[waveNum], ChangeType: "absolute" }
+          }
+        });
+      }
+      
+      waveRefs.push(waveActions);
+    });
+  }
+
+  let waveManagerData = {
+    FlagWaveInterval: flagInterval,
+    WaveCount: waveRefs.length,
+    WaveSpendingPointIncrement: 100,
+    WaveSpendingPoints: 100,
+    Waves: waveRefs
+  };
+
+  if (autoWaves) {
+    // Keep everything in sync: WaveCount = WavesPerFlag * FlagCount, Waves array has exactly that many entries
+    while (waveRefs.length < autoNum.total) waveRefs.push([]);
+    waveRefs.length = autoNum.total;
+    waveManagerData = {
+      FlagWaveInterval: autoNum.per,
+      WaveCount: autoNum.total,
+      ZombieCountdownFirstWaveSecs: 10,
+      Waves: waveRefs
+    };
+    objects.push({
+      "aliases": ["LevelEscalationModule"],
+      "objclass": "LevelEscalationModuleProperties",
+      "objdata": {
+        "FlagCount": autoNum.flags,
+        "PlantfoodToSpawnCount": Math.max(0, parseInt(document.getElementById("autoPlantfood").value) || 0),
+        "PointIncrementPerWave": Math.max(0, parseInt(document.getElementById("autoPointIncrement").value) || 0),
+        "StartingPoints": Math.max(0, parseInt(document.getElementById("autoStartingPoints").value) || 0),
+        "WaveManagerProps": "RTID(WaveManagerProps@.)",
+        "WavesPerFlag": autoNum.per,
+        "ZombiePool": autoZombiePool.map(z => `RTID(${z}@ZombieTypes)`)
+      }
+    });
+  }
+  
+  if (minigame === "i_zombie") {
+    waveManagerData = {
+      ZombieCountdownFirstWaveSecs: 0.0,
+      ZombieCountdownFirstWaveConveyorSecs: 0.0,
+      ZombieCountdownHugeWaveDelay: 0.0,
+      Waves: []
+    };
+  }
+
+  objects.push({
+    aliases: ["WaveManagerProps"],
+    objclass: "WaveManagerProperties",
+    objdata: waveManagerData
+  });
+
+  let newWavesData = { WaveManagerProps: "RTID(WaveManagerProps@CurrentLevel)" };
+  if (minigame === "last_stand") {
+    newWavesData["ManualStartup"] = true;
+  }
+
+  if (autoWaves) newWavesData = { WaveManagerProps: "RTID(WaveManagerProps@.)" };
+  objects.push({
+    aliases: ["NewWaves"],
+    objclass: "WaveManagerModuleProperties",
+    objdata: newWavesData
+  });
+
+  const levelObj = {
+    objclass: "LevelDefinition",
+    objdata: {
+      StageModule: `RTID(${stage}@LevelModules)`,
+      Name: name,
+      Description: desc,
+      LevelNumber: 1,
+      Loot: "RTID(DefaultLoot@LevelModules)"
+    }
+  };
+
+  if (minigame !== "last_stand") {
+    levelObj.objdata["StartingSun"] = globalSun;
+  }
+
+  if (minigame !== "i_zombie" && zombieLevelFilled) {
+    levelObj.objdata["ZombieLevel"] = zombieLevel;
+  }
+
+  if (minigame === "i_zombie") {
+    levelObj.objdata["SuppressPlantfoodPurchase"] = true;
+    levelObj.objdata["SuppressAccountUpgrades"] = true;
+    levelObj.objdata["DisablePlantBoosts"] = true;
+    levelObj.objdata["Loot"] = "RTID(NoLoot@LevelModules)";
+    levelObj.objdata["AddBonusStartingSun"] = false;
+    levelObj.objdata["LevelPowerupSet"] = "LevelPowerupsDisabled";
+  }
+
+  if (document.getElementById("suppressPlantfood").checked) {
+    levelObj.objdata["SuppressPlantfoodPurchase"] = true;
+  }
+
+  // Safety pass: every lawn object (plants, zombies, griditems, moonsoil, crystals) must be listed in Modules as RTID(name@.)
+  ["MountingZombies", "MountingPlants", "MoonLawn", "MountingCrystals", "MountingGravestones"].forEach(alias => {
+    const rtid = `RTID(${alias}@.)`;
+    const exists = objects.some(o => Array.isArray(o.aliases) && o.aliases.includes(alias));
+    if (exists && !modules.includes(rtid)) modules.push(rtid);
+  });
+
+  if (!modules.includes("RTID(SeedChooserUI@LevelModules)")) modules.push("RTID(SeedChooserUI@LevelModules)");
+
+  levelObj.objdata["Modules"] = modules;
+
+  if (resourceGroupNames.length > 0) {
+    levelObj.objdata.ResourceGroupNames = resourceGroupNames;
+  }
+
+  if (music === "UltimateBattle") levelObj.objdata.MusicType = "MiniGame_A";
+  else if (music === "DemonstrationMinigame") levelObj.objdata.MusicType = "MiniGame_B";
+  else if (music) modules.push(`RTID(${music}@LevelModules)`);
+
+  // Level Escalation goes last in Modules (same order as a working level)
+  if (autoWaves && minigame !== "i_zombie") modules.push("RTID(LevelEscalationModule@.)");
+
+  // LevelDefinition first, version last
+  objects.unshift(levelObj);
+
+  // --- DOWNLOAD LOGIC ---
+  let finalJson = JSON.stringify({ "#comment": "Evolution", objects, version: 1 }, null, 2);
+  // JSON.stringify writes 1.0 as 1, but the game needs SpeedMultiplier as a float (1.0) or it crashes
+  finalJson = finalJson.replace(/("SpeedMultiplier":\s*)(-?\d+)(?=\s*[,}\n])/g, '$1$2.0');
+  document.getElementById("output").value = finalJson;
+
+  const blob = new Blob([finalJson], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = fileName; 
+  document.body.appendChild(a);
+  a.click();
+  
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  return { finalJson, fileName };
+}
+</script>
+</body>
+</html>
